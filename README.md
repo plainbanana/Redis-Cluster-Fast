@@ -1,4 +1,3 @@
-
 # NAME
 
 Redis::Cluster::Fast - It's new $module

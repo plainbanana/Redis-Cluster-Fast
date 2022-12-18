@@ -1,5 +1,7 @@
 name = "Redis-Cluster-Fast"
-badges = ["github-actions/test.yml"]
-module_maker="ModuleBuildTiny"
-static_install = "auto"
-
+badges = []
+module_maker = "ModuleBuild"
+[build]
+build_class = "builder::MyBuilder"
+[no_index]
+directory = ['t', 'xt', 'inc', 'share', 'eg', 'examples', 'author', 'builder', 'deps']

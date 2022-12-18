@@ -30,4 +30,14 @@ MYMETA.*
 
 /Redis-Cluster-Fast-*
 lib/Redis/Cluster/Fast.c
-!lib/Redis/Cluster/ppport.h
+lib/Redis/Cluster/Fast.xs
+
+src/ppport.h
+
+.idea
+CMakeLists.txt
+cmake-build-debug
+_Deparsed_XSubs.pm
+cpanfile.snapshot
+
+deps/build

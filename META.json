@@ -22,13 +22,18 @@
          "eg",
          "examples",
          "author",
-         "builder"
+         "builder",
+         "deps"
       ]
    },
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build::Tiny" : "0.035"
+            "File::Spec" : "0",
+            "File::Which" : "0",
+            "File::chdir" : "0",
+            "Module::Build" : "0.4005",
+            "Module::Build::XSUtil" : "0.02"
          }
       },
       "develop" : {
@@ -47,12 +52,18 @@
       },
       "test" : {
          "requires" : {
-            "Test::More" : "0.98"
+            "IO::CaptureOutput" : "0",
+            "Mouse" : "0",
+            "Sub::Retry" : "0",
+            "Test::Docker::Image" : "0",
+            "Test::LeakTrace" : "0",
+            "Test::More" : "0.98",
+            "Test::SharedFork" : "0"
          }
       }
    },
    "release_status" : "unstable",
    "version" : "0.01",
-   "x_serialization_backend" : "JSON::PP version 4.02",
+   "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 0
 }

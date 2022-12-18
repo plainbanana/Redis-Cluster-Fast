@@ -2,11 +2,50 @@ package Redis::Cluster::Fast;
 use 5.008001;
 use strict;
 use warnings;
+use Carp qw/croak confess/;
 
 our $VERSION = "0.01";
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
+
+sub new {
+    my ($class, %args) = @_;
+    my $self = $class->_new;
+
+    $self->__set_debug($args{debug} ? 1 : 0);
+
+    croak 'need startup_nodes' unless defined $args{startup_nodes};
+    if (my $servers = join(',', @{$args{startup_nodes}})) {
+        $self->__set_servers($servers);
+    }
+
+    croak "failed to connect redis servers"
+        if $self->connect();
+    return $self;
+}
+
+### Deal with common, general case, Redis commands
+our $AUTOLOAD;
+
+sub AUTOLOAD {
+    my $command = $AUTOLOAD;
+    $command =~ s/.*://;
+    my @command = split /_/, uc $command;
+
+    my $method = sub {
+        my $self = shift;
+        my ($reply, $error) = $self->__std_cmd(@command, @_);
+        confess "[$command] $error" if defined $error;
+        return (wantarray && ref $reply eq 'ARRAY') ? @$reply : $reply;
+    };
+
+    # Save this method for future calls
+    no strict 'refs';
+    *$AUTOLOAD = $method;
+
+    goto $method;
+}
 
 1;
 __END__
