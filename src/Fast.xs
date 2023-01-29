@@ -49,7 +49,6 @@ typedef struct redis_cluster_fast_s {
     struct timeval connect_timeout;
     struct timeval command_timeout;
     pid_t pid;
-    bool connect_ok;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
 
 typedef struct redis_cluster_fast_reply_s {
@@ -130,6 +129,7 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     }
 
     reply_t->done = 1;
+    event_base_loopbreak(self->cluster_event_base);
 }
 
 void connectCallback(const redisAsyncContext *ac, int status) {
@@ -180,7 +180,7 @@ void wait_for_event_with_flag(Redis__Cluster__Fast self, short target_event_flag
 
 void wait_for_event(Redis__Cluster__Fast self) {
     DEBUG_EVENT_BASE();
-    int status = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
+    int status = event_base_dispatch(self->cluster_event_base);
     DEBUG_MSG("event loop done. status %d", status);
     DEBUG_EVENT_BASE();
 }
@@ -203,12 +203,14 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
 
     self->cluster_event_base = event_base_new();
     redisClusterLibeventAttach(self->acc, self->cluster_event_base);
+
+    const struct timeval exit_after = self->command_timeout;
+    event_base_loopexit(self->cluster_event_base, &exit_after);
+
 /*
     redisClusterAsyncSetConnectCallback(self->acc, connectCallback);
     redisClusterAsyncSetDisconnectCallback(self->acc, disconnectCallback);
 */
-
-    self->connect_ok = true;
 
     return 0;
 }
@@ -275,6 +277,11 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, con
         wait_for_event(self);
         if (reply_t->done) {
             break;
+        }
+        if (event_base_got_exit(self->cluster_event_base)) {
+            DEBUG_MSG("%s", "event_base got exit");
+            reply_t->error = "command wait timeout";
+            return reply_t;
         }
     }
 
@@ -426,12 +433,6 @@ void
 DESTROY(Redis::Cluster::Fast self)
 CODE:
 {
-    if (self->connect_ok) {
-        DEBUG_MSG("%s", "disconnect");
-        redisClusterAsyncDisconnect(self->acc);
-        event_base_dispatch(self->cluster_event_base);
-    }
-
     redisClusterAsyncFree(self->acc);
 
     if (self->cluster_event_base) {
