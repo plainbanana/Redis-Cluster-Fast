@@ -430,5 +430,21 @@ void
 DESTROY(Redis::Cluster::Fast self)
 CODE:
 {
-    DEBUG_MSG("%s", "TODO: clean vars");
+    redisClusterAsyncDisconnect(self->acc);
+    event_base_dispatch(self->cluster_event_base);
+    redisClusterAsyncFree(self->acc);
+    event_base_free(self->cluster_event_base);
+
+    if (self->hostnames) {
+        DEBUG_MSG("%s", "free hostnames");
+        free(self->hostnames);
+        self->hostnames = NULL;
+    }
+    if (self->error) {
+        DEBUG_MSG("%s", "free error");
+        free(self->error);
+        self->error = NULL;
+    }
+    Safefree(self);
+    DEBUG_MSG("%s", "done");
 }
