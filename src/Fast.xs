@@ -22,14 +22,6 @@ extern "C" {
 
 #define MAX_ERROR_SIZE 256
 
-#define WAIT_FOR_EVENT_OK 0
-#define WAIT_FOR_EVENT_READ_TIMEOUT 1
-#define WAIT_FOR_EVENT_WRITE_TIMEOUT 2
-#define WAIT_FOR_EVENT_EXCEPTION 3
-
-#define FLAG_INSIDE_TRANSACTION 0x01
-#define FLAG_INSIDE_WATCH       0x02
-
 #define DEBUG_MSG(fmt, ...) \
     if (self->debug) {                                                  \
         fprintf(stderr, "[%d][%d][%s:%d:%s]: ", getpid(), getppid(), __FILE__, __LINE__, __func__);  \
@@ -51,25 +43,11 @@ typedef struct redis_cluster_fast_s {
     redisClusterAsyncContext* acc;
     struct event_base* cluster_event_base;
     char* hostnames;
-    char* path;
     char* error;
-    double reconnect;
-    int every;
     int debug;
-    double cnx_timeout;
-    double read_timeout;
-    double write_timeout;
-    int current_database;
-    int need_reconnect;
-    int is_connected;
-    SV* on_connect;
-    SV* on_build_sock;
-    SV* data;
-    SV* reconnect_on_error;
-    double next_reconnect_on_error_at;
-    int proccess_sub_count;
-    int is_subscriber;
-    int expected_subs;
+    int max_retry;
+    struct timeval connect_timeout;
+    struct timeval command_timeout;
     pid_t pid;
     int flags;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
@@ -220,6 +198,10 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
 
     self->acc = redisClusterAsyncContextInit();
     redisClusterSetOptionAddNodes(self->acc->cc, self->hostnames);
+    redisClusterSetOptionConnectTimeout(self->acc->cc, self->connect_timeout);
+    redisClusterSetOptionTimeout(self->acc->cc, self->command_timeout);
+    redisClusterSetOptionMaxRetry(self->acc->cc, self->max_retry);
+
     if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
         DEBUG_MSG("connect error %s", self->acc->cc->errstr);
         return 1;
@@ -243,6 +225,11 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 static cmd_reply_context_t *
 Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, const char **argv, size_t *argvlen) {
     DEBUG_MSG("start: %s", *argv);
+
+    if (self->pid != getpid()) {
+        DEBUG_MSG("%s", "pid changed");
+        event_reinit(self->cluster_event_base);
+    }
 
     cmd_reply_context_t *reply_t = (cmd_reply_context_t *) malloc(sizeof(cmd_reply_context_t));
     reply_t->done = 0;
@@ -313,9 +300,6 @@ CODE:
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
     DEBUG_MSG("%s", "start new");
     self->error = (char*)malloc(MAX_ERROR_SIZE);
-    self->reconnect_on_error = NULL;
-    self->next_reconnect_on_error_at = -1;
-    self->is_connected = 1;
     ST(0) = sv_newmortal();
     sv_setref_pv(ST(0), cls, (void*)self);
     DEBUG_MSG("return %p", ST(0));
@@ -348,6 +332,36 @@ CODE:
         strcpy(self->hostnames, hostnames);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
     }
+}
+
+void
+__set_connect_timeout(Redis::Cluster::Fast self, double double_sec)
+CODE:
+{
+    int second = (int) (double_sec);
+    int micro_second = (int) (fmod(double_sec * 1000000, 1000000) + 0.999);
+    struct timeval timeout = { second, micro_second };
+    self->connect_timeout = timeout;
+    DEBUG_MSG("connect timeout %d, %d", second, micro_second);
+}
+
+void
+__set_command_timeout(Redis::Cluster::Fast self, double double_sec)
+CODE:
+{
+    int second = (int) (double_sec);
+    int micro_second = (int) (fmod(double_sec * 1000000, 1000000) + 0.999);
+    struct timeval timeout = { second, micro_second };
+    self->command_timeout = timeout;
+    DEBUG_MSG("command timeout %d, %d", second, micro_second);
+}
+
+void
+__set_max_retry(Redis::Cluster::Fast self, int max_retry)
+CODE:
+{
+    self->max_retry = max_retry;
+    DEBUG_MSG("max_retry %d", max_retry);
 }
 
 int
@@ -405,7 +419,7 @@ CODE:
         ST(1) = sv_2mortal(newSVpvn(result_context->error, strlen(result_context->error)));
     } else if (result_context->ret.error) {
         ST(1) = result_context->ret.error;
-    }else{
+    } else {
         ST(1) = &PL_sv_undef;
     }
 

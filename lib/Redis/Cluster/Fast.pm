@@ -20,6 +20,18 @@ sub new {
         $self->__set_servers($servers);
     }
 
+    my $connect_timeout = $args{connect_timeout};
+    $connect_timeout = 1 unless $connect_timeout;
+    $self->__set_connect_timeout($connect_timeout);
+
+    my $command_timeout = $args{command_timeout};
+    $command_timeout = 1 unless $command_timeout;
+    $self->__set_command_timeout($command_timeout);
+
+    my $max_retry = $args{max_retry_count};
+    $max_retry = 10 unless $max_retry;
+    $self->__set_max_retry($max_retry);
+
     croak "failed to connect redis servers"
         if $self->connect();
     return $self;
