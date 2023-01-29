@@ -435,7 +435,9 @@ CODE:
     event_base_dispatch(self->cluster_event_base);
 */
     redisClusterAsyncFree(self->acc);
-    event_base_free(self->cluster_event_base);
+    if (self->cluster_event_base) {
+        event_base_free(self->cluster_event_base);
+    }
 
     if (self->hostnames) {
         DEBUG_MSG("%s", "free hostnames");
