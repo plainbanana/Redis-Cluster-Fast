@@ -49,7 +49,7 @@ typedef struct redis_cluster_fast_s {
     struct timeval connect_timeout;
     struct timeval command_timeout;
     pid_t pid;
-    int flags;
+    bool connect_ok;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
 
 typedef struct redis_cluster_fast_reply_s {
@@ -179,20 +179,14 @@ void wait_for_event_with_flag(Redis__Cluster__Fast self, short target_event_flag
 };
 
 void wait_for_event(Redis__Cluster__Fast self) {
-    if (self->debug) {
-        event_base_dump_events(self->cluster_event_base, stderr);
-    }
+    DEBUG_EVENT_BASE();
     int status = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
     DEBUG_MSG("event loop done. status %d", status);
-    if (self->debug) {
-        event_base_dump_events(self->cluster_event_base, stderr);
-    }
+    DEBUG_EVENT_BASE();
 }
 
 int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
     DEBUG_MSG("%s", "start connect");
-
-    self->flags = 0;
 
     self->pid = getpid();
 
@@ -213,6 +207,8 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
     redisClusterAsyncSetConnectCallback(self->acc, connectCallback);
     redisClusterAsyncSetDisconnectCallback(self->acc, disconnectCallback);
 */
+
+    self->connect_ok = true;
 
     return 0;
 }
@@ -430,12 +426,16 @@ void
 DESTROY(Redis::Cluster::Fast self)
 CODE:
 {
-/*
-    redisClusterAsyncDisconnect(self->acc);
-    event_base_dispatch(self->cluster_event_base);
-*/
+    if (self->connect_ok) {
+        DEBUG_MSG("%s", "disconnect");
+        redisClusterAsyncDisconnect(self->acc);
+        event_base_dispatch(self->cluster_event_base);
+    }
+
     redisClusterAsyncFree(self->acc);
+
     if (self->cluster_event_base) {
+        DEBUG_MSG("%s", "free event_base");
         event_base_free(self->cluster_event_base);
     }
 
