@@ -430,8 +430,10 @@ void
 DESTROY(Redis::Cluster::Fast self)
 CODE:
 {
+/*
     redisClusterAsyncDisconnect(self->acc);
     event_base_dispatch(self->cluster_event_base);
+*/
     redisClusterAsyncFree(self->acc);
     event_base_free(self->cluster_event_base);
 
