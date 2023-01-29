@@ -21,6 +21,7 @@ extern "C" {
 #include "ppport.h"
 
 #define MAX_ERROR_SIZE 256
+#define ONE_SECOND_TO_MICRO 1000000
 
 #define DEBUG_MSG(fmt, ...) \
     if (self->debug) {                                                  \
@@ -342,7 +343,7 @@ __set_connect_timeout(Redis::Cluster::Fast self, double double_sec)
 CODE:
 {
     int second = (int) (double_sec);
-    int micro_second = (int) (fmod(double_sec * 1000000, 1000000) + 0.999);
+    int micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
     struct timeval timeout = { second, micro_second };
     self->connect_timeout = timeout;
     DEBUG_MSG("connect timeout %d, %d", second, micro_second);
@@ -353,7 +354,7 @@ __set_command_timeout(Redis::Cluster::Fast self, double double_sec)
 CODE:
 {
     int second = (int) (double_sec);
-    int micro_second = (int) (fmod(double_sec * 1000000, 1000000) + 0.999);
+    int micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
     struct timeval timeout = { second, micro_second };
     self->command_timeout = timeout;
     DEBUG_MSG("command timeout %d, %d", second, micro_second);
