@@ -63,6 +63,17 @@
       }
    },
    "release_status" : "unstable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/plainbanana/Redis-Cluster-Fast/issues"
+      },
+      "homepage" : "https://github.com/plainbanana/Redis-Cluster-Fast",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/plainbanana/Redis-Cluster-Fast.git",
+         "web" : "https://github.com/plainbanana/Redis-Cluster-Fast"
+      }
+   },
    "version" : "0.01",
    "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 0
