@@ -224,15 +224,20 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 static cmd_reply_context_t *
 Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, const char **argv, size_t *argvlen) {
     DEBUG_MSG("start: %s", *argv);
+    cmd_reply_context_t *reply_t = (cmd_reply_context_t *) malloc(sizeof(cmd_reply_context_t));
+    reply_t->done = 0;
+    reply_t->self = (void*)self;
 
     if (self->pid != getpid()) {
         DEBUG_MSG("%s", "pid changed");
         event_reinit(self->cluster_event_base);
+        redisClusterAsyncFree(self->acc);
+        if (Redis__Cluster__Fast_connect(self)) {
+            DEBUG_MSG("%s", "failed fork");
+            reply_t->error = "failed to fork";
+            return reply_t;
+        }
     }
-
-    cmd_reply_context_t *reply_t = (cmd_reply_context_t *) malloc(sizeof(cmd_reply_context_t));
-    reply_t->done = 0;
-    reply_t->self = (void*)self;
 
     char *cmd;
     long long int len;
