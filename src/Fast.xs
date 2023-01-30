@@ -230,7 +230,7 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, con
 
     if (self->pid != getpid()) {
         DEBUG_MSG("%s", "pid changed");
-        event_reinit(self->cluster_event_base);
+        event_base_free(self->cluster_event_base);
         redisClusterAsyncFree(self->acc);
         if (Redis__Cluster__Fast_connect(self)) {
             DEBUG_MSG("%s", "failed fork");
