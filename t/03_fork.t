@@ -9,7 +9,6 @@ use Test::SharedFork;
 
 my $redis = Redis::Cluster::Fast->new(
     startup_nodes => get_startup_nodes,
-    debug => 1
 );
 $redis->mset('{my}hoge', 'test1', '{my}fuga', 'test2');
 $redis->mset('{my}foo', 'FOO', '{my}bar', 'BAR');
