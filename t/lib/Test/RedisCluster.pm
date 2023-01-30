@@ -5,7 +5,7 @@ use warnings FATAL => 'all';
 use Exporter 'import';
 use Redis::Cluster::Fast;
 use Sub::Retry;
-use Test::Docker::Image;
+use Test::RedisClusterImage;
 
 our @EXPORT_OK = qw/get_startup_nodes REDIS_CLUSTER_INITIAL_PORT/;
 
@@ -27,7 +27,7 @@ sub _get_container_ports {
 
 my $redis_cluster_guard;
 unless ($ENV{DISABLE_TEST_REDIS_CLUSTER}) {
-    $redis_cluster_guard = Test::Docker::Image->new(
+    $redis_cluster_guard = Test::RedisClusterImage->new(
         boot => 'Test::RedisClusterBoot',
         container_ports => _get_container_ports,
         tag => 'grokzen/redis-cluster:' . REDIS_VERSION,
