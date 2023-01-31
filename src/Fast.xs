@@ -289,7 +289,6 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, con
     // handle write only
     wait_for_event_with_flag(self, EV_WRITE);
 
-    // TODO: set timeout
     while (1) {
         wait_for_event(self);
         if (resp_error_num) {
