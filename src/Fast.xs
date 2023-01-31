@@ -286,8 +286,10 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **a
         reply_t->error = NULL;
     }
 
+/* TODO: support coderef arg to run a command in the background
     // handle write only
     wait_for_event_with_flag(self, EV_WRITE);
+*/
 
     while (1) {
         wait_for_event(self);
