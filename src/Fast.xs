@@ -22,6 +22,8 @@ extern "C" {
 
 #define MAX_ERROR_SIZE 256
 #define ONE_SECOND_TO_MICRO 1000000
+#define REDIS_CMD_HELLO "HELLO"
+#define REDIS_PROTOCOL_VERSION 3
 
 #define DEBUG_MSG(fmt, ...) \
     if (self->debug) {                                                  \
@@ -79,18 +81,27 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
         case REDIS_REPLY_ERROR:
             res.error = sv_2mortal(newSVpvn(reply->str, reply->len));
             break;
-        case REDIS_REPLY_STRING:
+
+        case REDIS_REPLY_BIGNUM:
+        case REDIS_REPLY_DOUBLE:
         case REDIS_REPLY_STATUS:
+        case REDIS_REPLY_STRING:
+        case REDIS_REPLY_VERB: // TODO: parse vtype (e.g. `txt`, `md`)
             res.result = sv_2mortal(newSVpvn(reply->str, reply->len));
             break;
 
         case REDIS_REPLY_INTEGER:
+        case REDIS_REPLY_BOOL:
             res.result = sv_2mortal(newSViv(reply->integer));
             break;
         case REDIS_REPLY_NIL:
             res.result = &PL_sv_undef;
             break;
 
+        case REDIS_REPLY_MAP:  // TODO: parse to Perl Hash
+        case REDIS_REPLY_SET:  // TODO: parse to Perl Hash
+        case REDIS_REPLY_ATTR: // TODO: parse to Perl Hash
+        case REDIS_REPLY_PUSH:
         case REDIS_REPLY_ARRAY: {
             AV *av = newAV();
             size_t i;
@@ -135,18 +146,10 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
 
 void connectCallback(const redisAsyncContext *ac, int status) {
     if (status != REDIS_OK) {
-        printf("Error: %s\n", ac->errstr);
         return;
-    } else {
-        DEBUG_MSG_FORCE("%s ", "connect callback ok");
     }
-}
 
-void disconnectCallback(const redisAsyncContext *ac, int status) {
-    DEBUG_MSG_FORCE("%s %d %s", "disconnect callback", status == REDIS_OK, ac->errstr);
-    if (status != REDIS_OK) {
-        return;
-    }
+    redisAsyncCommand(ac, NULL, NULL, "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
 }
 
 int eventbaseCallback(const struct event_base *base, const struct event *event, void *privdata) {
@@ -208,11 +211,9 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
     const struct timeval exit_after = self->command_timeout;
     event_base_loopexit(self->cluster_event_base, &exit_after);
 
-/*
     redisClusterAsyncSetConnectCallback(self->acc, connectCallback);
-    redisClusterAsyncSetDisconnectCallback(self->acc, disconnectCallback);
-*/
 
+    DEBUG_MSG("%s", "done connect");
     return 0;
 }
 
