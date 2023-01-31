@@ -233,7 +233,7 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 }
 
 static cmd_reply_context_t *
-Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int argc, const char **argv, size_t *argvlen) {
+Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen) {
     DEBUG_MSG("start: %s", *argv);
     cmd_reply_context_t *reply_t = (cmd_reply_context_t *) malloc(sizeof(cmd_reply_context_t));
     reply_t->done = 0;
@@ -401,7 +401,6 @@ void
 __std_cmd(Redis::Cluster::Fast self, ...)
 PREINIT:
     cmd_reply_context_t* result_context;
-    SV* cb;
     char** argv;
     size_t* argvlen;
     STRLEN len;
@@ -412,13 +411,7 @@ CODE:
        croak("Not connected to any server");
     }
 
-    cb = ST(items - 1);
-    if (SvROK(cb) && SvTYPE(SvRV(cb)) == SVt_PVCV) {
-        argc = items - 2;
-    } else {
-        cb = NULL;
-        argc = items - 1;
-    }
+    argc = items - 1;
     Newx(argv, sizeof(char*) * argc, char*);
     Newx(argvlen, sizeof(size_t) * argc, size_t);
 
@@ -432,7 +425,7 @@ CODE:
 
     DEBUG_MSG("raw_cmd : %s", *argv);
 
-    result_context = Redis__Cluster__Fast_run_cmd(self, cb, argc, (const char **) argv, argvlen);
+    result_context = Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen);
 
     Safefree(argv);
 
