@@ -97,7 +97,7 @@ sub new {
 
     $self->_build_dependencies;
 
-    $self->config(optimize => '-g O0 -fsanitize=undefined,leak -fno-sanitize-recover=all')
+    $self->config(optimize => '-g O0 -fsanitize=undefined,leak -fno-sanitize-recover=all -Wall')
         if is_debug;
 
     return $self;
