@@ -233,7 +233,7 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 }
 
 static cmd_reply_context_t *
-Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, const char **argv, size_t *argvlen) {
+Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int argc, const char **argv, size_t *argvlen) {
     DEBUG_MSG("start: %s", *argv);
     cmd_reply_context_t *reply_t = (cmd_reply_context_t *) malloc(sizeof(cmd_reply_context_t));
     reply_t->done = 0;
@@ -252,7 +252,7 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, con
 
     char *cmd;
     long long int len;
-    len = redisFormatCommandArgv(&cmd, arg_num, argv, argvlen);
+    len = redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
         reply_t->error = "memory allocation error";
@@ -405,7 +405,7 @@ PREINIT:
     char** argv;
     size_t* argvlen;
     STRLEN len;
-    int arg_num, i;
+    int argc, i;
 CODE:
 {
     if(!self->acc) {
@@ -414,15 +414,15 @@ CODE:
 
     cb = ST(items - 1);
     if (SvROK(cb) && SvTYPE(SvRV(cb)) == SVt_PVCV) {
-        arg_num = items - 2;
+        argc = items - 2;
     } else {
         cb = NULL;
-        arg_num = items - 1;
+        argc = items - 1;
     }
-    Newx(argv, sizeof(char*) * arg_num, char*);
-    Newx(argvlen, sizeof(size_t) * arg_num, size_t);
+    Newx(argv, sizeof(char*) * argc, char*);
+    Newx(argvlen, sizeof(size_t) * argc, size_t);
 
-    for (i = 0; i < arg_num; i++) {
+    for (i = 0; i < argc; i++) {
         if(!sv_utf8_downgrade(ST(i + 1), 1)) {
             croak("command sent is not an octet sequence in the native encoding (Latin-1). Consider using debug mode to see the command itself.");
         }
@@ -432,7 +432,7 @@ CODE:
 
     DEBUG_MSG("raw_cmd : %s", *argv);
 
-    result_context = Redis__Cluster__Fast_run_cmd(self, cb, arg_num, (const char **) argv, argvlen);
+    result_context = Redis__Cluster__Fast_run_cmd(self, cb, argc, (const char **) argv, argvlen);
 
     Safefree(argv);
 
