@@ -42,6 +42,8 @@ extern "C" {
     fprintf(stderr, fmt, __VA_ARGS__);                              \
     fprintf(stderr, "\n");
 
+int resp_error_num = 0;
+
 typedef struct redis_cluster_fast_s {
     redisClusterAsyncContext* acc;
     struct event_base* cluster_event_base;
@@ -144,12 +146,20 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     event_base_loopbreak(self->cluster_event_base);
 }
 
+void helloCommandCallback(redisAsyncContext *cc, void *r, void *privdata) {
+    redisReply *reply = (redisReply *) r;
+    if (!reply || reply->type != REDIS_REPLY_MAP) {
+        resp_error_num++;
+    }
+}
+
 void connectCallback(const redisAsyncContext *ac, int status) {
     if (status != REDIS_OK) {
         return;
     }
 
-    redisAsyncCommand(ac, NULL, NULL, "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
+    redisAsyncCommand(ac, helloCommandCallback, NULL,
+                      "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
 }
 
 int eventbaseCallback(const struct event_base *base, const struct event *event, void *privdata) {
@@ -282,6 +292,11 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, SV *cb, int arg_num, con
     // TODO: set timeout
     while (1) {
         wait_for_event(self);
+        if (resp_error_num) {
+            DEBUG_MSG("%s %d %d", "protocol does not RESP", REDIS_PROTOCOL_VERSION, resp_error_num);
+            reply_t->error = "RESP version error. Use Redis 6 or higher.";
+            return reply_t;
+        }
         if (reply_t->done) {
             break;
         }
