@@ -20,12 +20,8 @@ extern "C" {
 #define NEED_newSVpvn_flags
 #include "ppport.h"
 
-// 100 is sufficiently out of range of standard Redis errors
-#define ERR_REDIS_HELLO_TOO_MANY_RETRIES 100
 #define MAX_ERROR_SIZE 256
 #define ONE_SECOND_TO_MICRO 1000000
-#define REDIS_CMD_HELLO "HELLO"
-#define REDIS_PROTOCOL_VERSION 3
 
 #define DEBUG_MSG(fmt, ...) \
     if (self->debug) {                                                  \
@@ -146,41 +142,6 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     event_base_loopbreak(self->cluster_event_base);
 }
 
-void helloCommandCallback(redisAsyncContext *ac, void *r, void *privdata) {
-    int *count;
-    count = (int *) privdata;
-    (*count)++;
-
-    redisReply *reply = (redisReply *) r;
-    if (reply) {
-        if (reply->type != REDIS_REPLY_MAP) {
-            Perl_croak_caller("Use Redis 6 or higher.");
-        }
-    } else if (strcmp(ac->errstr, "Timeout") == 1) {
-        if (*count < ERR_REDIS_HELLO_TOO_MANY_RETRIES) {
-            redisAsyncCommand(ac, helloCommandCallback, count,
-                              "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
-        } else {
-            Perl_croak_caller("[%s] command too many retries.", REDIS_CMD_HELLO);
-        }
-    }
-}
-
-void upgradeProtocolAsync(redisAsyncContext *ac) {
-    int *count;
-    count = (int *) malloc(sizeof(int));
-    *count = 0;
-    redisAsyncCommand(ac, helloCommandCallback, count,
-                      "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
-}
-
-void connectCallback(redisAsyncContext *ac, int status) {
-    if (status != REDIS_OK) {
-        return;
-    }
-    upgradeProtocolAsync(ac);
-}
-
 /*
 int eventbaseCallback(const struct event_base *base, const struct event *event, void *privdata) {
     event_base_foreach_context_t *event_info;
@@ -241,8 +202,6 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
     event_config_set_flag(cfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
     self->cluster_event_base = event_base_new_with_config(cfg);
     redisClusterLibeventAttach(self->acc, self->cluster_event_base);
-
-    redisClusterAsyncSetConnectCallback(self->acc, (void (*)(const struct redisAsyncContext *, int)) connectCallback);
 
     DEBUG_MSG("%s", "done connect");
     return 0;
