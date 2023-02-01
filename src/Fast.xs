@@ -98,7 +98,7 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
         case REDIS_REPLY_MAP:  // TODO: parse to Perl Hash
         case REDIS_REPLY_SET:  // TODO: parse to Perl Hash
         case REDIS_REPLY_ATTR: // TODO: parse to Perl Hash
-        case REDIS_REPLY_PUSH:
+        case REDIS_REPLY_PUSH: // TODO: push handler
         case REDIS_REPLY_ARRAY: {
             AV *av = newAV();
             size_t i;
