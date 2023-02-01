@@ -82,7 +82,7 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
             'localhost:9005',
         ],
         connect_timeout => 0.05,
-        command_timeout => 0.05.,
+        command_timeout => 0.05,
         max_retry => 10,
     );
 
