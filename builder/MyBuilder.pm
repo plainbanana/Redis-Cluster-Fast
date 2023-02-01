@@ -51,13 +51,13 @@ sub _build_dependencies {
     }
 
     # hiredis
-    $self->do_system($make, '-C', 'deps/hiredis', "USE_SSL=1", "DESTDIR=$abs/build", 'all', 'install');
+    $self->do_system($make, '-C', 'deps/hiredis', "USE_SSL=0", "DESTDIR=$abs/build", 'all', 'install');
 
     # hiredis-cluster
     $self->do_system($make, '-C', 'deps/hiredis-cluster',
         "CFLAGS=-I$abs/build/usr/local/include -D_XOPEN_SOURCE=600",
         "LDFLAGS=-L$abs/build/usr/local/lib",
-        "USE_SSL=1",
+        "USE_SSL=0",
         "DESTDIR=$abs/build",
         'clean',
         'install'
