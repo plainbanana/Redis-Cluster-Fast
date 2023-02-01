@@ -34,6 +34,7 @@ sub _build_dependencies {
     }
     if (is_debug) {
         $self->do_system('git', 'submodule', 'update', '--init');
+        $self->do_system('git', 'apply', 'deps/async_context_always_use_resp3.patch');
     }
 
     # libevent
