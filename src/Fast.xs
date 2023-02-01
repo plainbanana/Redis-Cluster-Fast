@@ -44,18 +44,6 @@ extern "C" {
 
 int resp_error_num = 0;
 
-typedef struct redis_cluster_fast_s {
-    redisClusterAsyncContext* acc;
-    struct event_base* cluster_event_base;
-    char* hostnames;
-    char* error;
-    int debug;
-    int max_retry;
-    struct timeval connect_timeout;
-    struct timeval command_timeout;
-    pid_t pid;
-} redis_cluster_fast_t, *Redis__Cluster__Fast;
-
 typedef struct redis_cluster_fast_reply_s {
     SV *result;
     SV *error;
@@ -73,6 +61,19 @@ typedef struct event_base_foreach_context_s {
     short target_event_flag;
     bool matched;
 } event_base_foreach_context_t;
+
+typedef struct redis_cluster_fast_s {
+    redisClusterAsyncContext* acc;
+    struct event_base* cluster_event_base;
+    char* hostnames;
+    char* error;
+    cmd_reply_context_t *reply_t;
+    int debug;
+    int max_retry;
+    struct timeval connect_timeout;
+    struct timeval command_timeout;
+    pid_t pid;
+} redis_cluster_fast_t, *Redis__Cluster__Fast;
 
 static redis_cluster_fast_reply_t
 Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) {
@@ -215,11 +216,16 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
         return 1;
     }
 
-    self->cluster_event_base = event_base_new();
+    struct event_config *cfg;
+    cfg = event_config_new();
+    event_config_set_flag(cfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
+    self->cluster_event_base = event_base_new_with_config(cfg);
     redisClusterLibeventAttach(self->acc, self->cluster_event_base);
 
+/*
     const struct timeval exit_after = self->command_timeout;
     event_base_loopexit(self->cluster_event_base, &exit_after);
+*/
 
     redisClusterAsyncSetConnectCallback(self->acc, connectCallback);
 
@@ -235,7 +241,7 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 static cmd_reply_context_t *
 Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen) {
     DEBUG_MSG("start: %s", *argv);
-    cmd_reply_context_t *reply_t = (cmd_reply_context_t *) malloc(sizeof(cmd_reply_context_t));
+    cmd_reply_context_t *reply_t = self->reply_t;
     reply_t->done = 0;
     reply_t->self = (void*)self;
 
@@ -326,6 +332,7 @@ CODE:
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
     DEBUG_MSG("%s", "start new");
     self->error = (char*)malloc(MAX_ERROR_SIZE);
+    self->reply_t = (cmd_reply_context_t *)malloc(sizeof(cmd_reply_context_t));
     ST(0) = sv_newmortal();
     sv_setref_pv(ST(0), cls, (void*)self);
     DEBUG_MSG("return %p", ST(0));
@@ -465,6 +472,11 @@ CODE:
         DEBUG_MSG("%s", "free error");
         free(self->error);
         self->error = NULL;
+    }
+    if (self->reply_t){
+        DEBUG_MSG("%s", "free reply_t");
+       free(self->reply_t);
+       self->reply_t = NULL;
     }
     Safefree(self);
     DEBUG_MSG("%s", "done");
