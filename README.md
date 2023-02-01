@@ -1,3 +1,4 @@
+[![Actions Status](https://github.com/plainbanana/Redis-Cluster-Fast/workflows/Test/badge.svg)](https://github.com/plainbanana/Redis-Cluster-Fast/actions) [![MetaCPAN Release](https://badge.fury.io/pl/Redis-Cluster-Fast.svg)](https://metacpan.org/release/Redis-Cluster-Fast)
 # NAME
 
 Redis::Cluster::Fast - A fast perl binding for Redis Cluster
@@ -16,7 +17,7 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
             'localhost:9005',
         ],
         connect_timeout => 0.05,
-        command_timeout => 0.05.,
+        command_timeout => 0.05,
         max_retry => 10,
     );
 
