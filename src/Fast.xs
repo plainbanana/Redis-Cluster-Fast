@@ -397,6 +397,9 @@ CODE:
     DEBUG_MSG("raw_cmd : %s", *argv);
 
     Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen, result_context);
+
+    Safefree(argv);
+
     if (result_context->error) {
         ST(0) = &PL_sv_undef;
         ST(1) = sv_2mortal(newSVpvn(result_context->error, strlen(result_context->error)));
@@ -407,7 +410,6 @@ CODE:
                 result_context->ret.error : &PL_sv_undef ;
     }
 
-    Safefree(argv);
     XSRETURN(2);
 }
 
