@@ -20,6 +20,8 @@ extern "C" {
 #define NEED_newSVpvn_flags
 #include "ppport.h"
 
+// 100 is sufficiently out of range of standard Redis errors
+#define ERR_REDIS_HELLO_TOO_MANY_RETRIES 100
 #define MAX_ERROR_SIZE 256
 #define ONE_SECOND_TO_MICRO 1000000
 #define REDIS_CMD_HELLO "HELLO"
@@ -41,8 +43,6 @@ extern "C" {
     fprintf(stderr, "[%d][%d][%s:%d:%s]: ", getpid(), getppid(), __FILE__, __LINE__, __func__);  \
     fprintf(stderr, fmt, __VA_ARGS__);                              \
     fprintf(stderr, "\n");
-
-int resp_error_num = 0;
 
 typedef struct redis_cluster_fast_reply_s {
     SV *result;
@@ -147,20 +147,39 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     event_base_loopbreak(self->cluster_event_base);
 }
 
-void helloCommandCallback(redisAsyncContext *cc, void *r, void *privdata) {
+void helloCommandCallback(redisAsyncContext *ac, void *r, void *privdata) {
+    int *count;
+    count = (int *) privdata;
+    (*count)++;
+
     redisReply *reply = (redisReply *) r;
-    if (!reply || reply->type != REDIS_REPLY_MAP) {
-        resp_error_num++;
+    if (reply) {
+        if (reply->type != REDIS_REPLY_MAP) {
+            Perl_croak_caller("Use Redis 6 or higher.");
+        }
+    } else {
+        if (*count < ERR_REDIS_HELLO_TOO_MANY_RETRIES) {
+            redisAsyncCommand(ac, helloCommandCallback, count,
+                              "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
+        } else {
+            Perl_croak_caller("[%s] command too many retries.", REDIS_CMD_HELLO);
+        }
     }
 }
 
-void connectCallback(const redisAsyncContext *ac, int status) {
+void upgradeProtocolAsync(redisAsyncContext *ac) {
+    int *count;
+    count = (int *) malloc(sizeof(int));
+    *count = 0;
+    redisAsyncCommand(ac, helloCommandCallback, count,
+                      "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
+}
+
+void connectCallback(redisAsyncContext *ac, int status) {
     if (status != REDIS_OK) {
         return;
     }
-
-    redisAsyncCommand(ac, helloCommandCallback, NULL,
-                      "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
+    upgradeProtocolAsync(ac);
 }
 
 int eventbaseCallback(const struct event_base *base, const struct event *event, void *privdata) {
@@ -227,7 +246,7 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
     event_base_loopexit(self->cluster_event_base, &exit_after);
 */
 
-    redisClusterAsyncSetConnectCallback(self->acc, connectCallback);
+    redisClusterAsyncSetConnectCallback(self->acc, (void (*)(const struct redisAsyncContext *, int)) connectCallback);
 
     DEBUG_MSG("%s", "done connect");
     return 0;
@@ -299,11 +318,6 @@ Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **a
 
     while (1) {
         wait_for_event(self);
-        if (resp_error_num) {
-            DEBUG_MSG("%s %d %d", "protocol does not RESP", REDIS_PROTOCOL_VERSION, resp_error_num);
-            reply_t->error = "RESP version error. Use Redis 6 or higher.";
-            return reply_t;
-        }
         if (reply_t->done) {
             break;
         }
