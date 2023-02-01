@@ -156,7 +156,7 @@ void helloCommandCallback(redisAsyncContext *ac, void *r, void *privdata) {
         if (reply->type != REDIS_REPLY_MAP) {
             Perl_croak_caller("Use Redis 6 or higher.");
         }
-    } else {
+    } else if (strcmp(ac->errstr, "Timeout") == 1) {
         if (*count < ERR_REDIS_HELLO_TOO_MANY_RETRIES) {
             redisAsyncCommand(ac, helloCommandCallback, count,
                               "%s %d", REDIS_CMD_HELLO, REDIS_PROTOCOL_VERSION);
@@ -181,6 +181,7 @@ void connectCallback(redisAsyncContext *ac, int status) {
     upgradeProtocolAsync(ac);
 }
 
+/*
 int eventbaseCallback(const struct event_base *base, const struct event *event, void *privdata) {
     event_base_foreach_context_t *event_info;
     event_info = (event_base_foreach_context_t *) privdata;
@@ -210,6 +211,7 @@ void wait_for_event_with_flag(Redis__Cluster__Fast self, short target_event_flag
         return;
     }
 };
+*/
 
 void wait_for_event(Redis__Cluster__Fast self) {
     DEBUG_EVENT_BASE();
@@ -436,20 +438,17 @@ CODE:
     DEBUG_MSG("raw_cmd : %s", *argv);
 
     Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen, result_context);
-
-    Safefree(argv);
-
-    ST(0) = result_context->ret.result ?
-            result_context->ret.result : &PL_sv_undef;
-
     if (result_context->error) {
+        ST(0) = &PL_sv_undef;
         ST(1) = sv_2mortal(newSVpvn(result_context->error, strlen(result_context->error)));
-    } else if (result_context->ret.error) {
-        ST(1) = result_context->ret.error;
     } else {
-        ST(1) = &PL_sv_undef;
+        ST(0) = result_context->ret.result ?
+                result_context->ret.result : &PL_sv_undef;
+        ST(1) = result_context->ret.error ?
+                result_context->ret.error : &PL_sv_undef ;
     }
 
+    Safefree(argv);
     XSRETURN(2);
 }
 
