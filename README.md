@@ -87,3 +87,8 @@ it under the same terms as Perl itself.
 # AUTHOR
 
 plainbanana <plainbanana@mustardon.tokyo>
+
+# SEE ALSO
+
+- [Redis::ClusterRider](https://github.com/iph0/Redis-ClusterRider)
+- [Redis::Fast](https://github.com/shogo82148/Redis-Fast)

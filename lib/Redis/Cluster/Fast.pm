@@ -126,7 +126,7 @@ Require Redis 6 or higher to support L<RESP3|https://github.com/antirez/RESP3/bl
 
 Following arguments are available.
 
-=over 1
+=over 4
 
 =item startup_nodes
 
@@ -164,6 +164,16 @@ it under the same terms as Perl itself.
 =head1 AUTHOR
 
 plainbanana E<lt>plainbanana@mustardon.tokyoE<gt>
+
+=head1 SEE ALSO
+
+=over 4
+
+=item L<Redis::ClusterRider|https://github.com/iph0/Redis-ClusterRider>
+
+=item L<Redis::Fast|https://github.com/shogo82148/Redis-Fast>
+
+=back
 
 =cut
 
