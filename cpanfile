@@ -10,7 +10,7 @@ on 'test' => sub {
     requires 'Test::SharedFork';
 };
 
-on 'configure' => sub{
+on 'configure' => sub {
     requires 'File::Spec';
     requires 'File::Which';
     requires 'File::chdir';
