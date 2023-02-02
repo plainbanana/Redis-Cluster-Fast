@@ -41,3 +41,4 @@ _Deparsed_XSubs.pm
 cpanfile.snapshot
 
 deps/build
+test
