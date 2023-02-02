@@ -4,7 +4,7 @@ on 'test' => sub {
     requires 'IO::CaptureOutput';
     requires 'Mouse';
     requires 'Sub::Retry';
-    requires 'Test::Docker::Image';
+    requires 'Test::Docker::Image', '0.05';
     requires 'Test::LeakTrace';
     requires 'Test::More', '0.98';
     requires 'Test::SharedFork';
