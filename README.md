@@ -21,16 +21,25 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
         max_retry => 10,
     );
 
-    # 'OK'
-    my $res = $redis->set('test', 123);
+    $redis->set('test', 123);
+
     # '123'
     my $str = $redis->get('test');
-    # 'OK'
-    $res = $redis->mset('{my}foo', 'hoge', '{my}bar', 'fuga');
-    # get as array
-    my @array = $redis->mget('{my}foo', '{my}bar');
+
+    $redis->mset('{my}foo', 'hoge', '{my}bar', 'fuga');
+
     # get as array-ref
     my $array_ref = $redis->mget('{my}foo', '{my}bar');
+    # get as array
+    my @array = $redis->mget('{my}foo', '{my}bar');
+
+    $redis->hset('mymap', 'field1', 'Hello');
+    $redis->hset('mymap', 'field2', 'ByeBye');
+
+    # get as hash-ref
+    my $hash_ref = $redis->hgetall('mymap');
+    # get as hash
+    my %hash = $redis->hgetall('mymap');
 
 # DESCRIPTION
 

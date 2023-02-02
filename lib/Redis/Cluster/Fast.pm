@@ -49,7 +49,15 @@ sub AUTOLOAD {
         my $self = shift;
         my ($reply, $error) = $self->__std_cmd(@command, @_);
         confess "[$command] $error" if defined $error;
-        return (wantarray && ref $reply eq 'ARRAY') ? @$reply : $reply;
+        if (wantarray) {
+            my $type = ref $reply;
+            if ($type eq 'ARRAY') {
+                return @$reply;
+            } elsif ($type eq 'HASH') {
+                return %$reply;
+            }
+        }
+        return $reply;
     };
 
     # Save this method for future calls
@@ -86,16 +94,25 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
         max_retry => 10,
     );
 
-    # 'OK'
-    my $res = $redis->set('test', 123);
+    $redis->set('test', 123);
+
     # '123'
     my $str = $redis->get('test');
-    # 'OK'
-    $res = $redis->mset('{my}foo', 'hoge', '{my}bar', 'fuga');
-    # get as array
-    my @array = $redis->mget('{my}foo', '{my}bar');
+
+    $redis->mset('{my}foo', 'hoge', '{my}bar', 'fuga');
+
     # get as array-ref
     my $array_ref = $redis->mget('{my}foo', '{my}bar');
+    # get as array
+    my @array = $redis->mget('{my}foo', '{my}bar');
+
+    $redis->hset('mymap', 'field1', 'Hello');
+    $redis->hset('mymap', 'field2', 'ByeBye');
+
+    # get as hash-ref
+    my $hash_ref = $redis->hgetall('mymap');
+    # get as hash
+    my %hash = $redis->hgetall('mymap');
 
 =head1 DESCRIPTION
 

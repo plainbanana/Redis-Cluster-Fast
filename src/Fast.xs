@@ -95,9 +95,33 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
             res.result = &PL_sv_undef;
             break;
 
-        case REDIS_REPLY_MAP:  // TODO: parse to Perl Hash
-        case REDIS_REPLY_SET:  // TODO: parse to Perl Hash
-        case REDIS_REPLY_ATTR: // TODO: parse to Perl Hash
+        case REDIS_REPLY_MAP:
+        case REDIS_REPLY_SET:
+        case REDIS_REPLY_ATTR: {
+            HV *hv = newHV();
+            size_t i;
+            res.result = sv_2mortal(newRV_noinc((SV *) hv));
+
+            char *key;
+            for (i = 0; i < reply->elements; i++) {
+                if (i % 2 == 0) {
+                    key = reply->element[i]->str;
+                } else {
+                    redis_cluster_fast_reply_t elem = {NULL, NULL};
+                    elem = Redis__Cluster__Fast_decode_reply(self, reply->element[i]);
+                    if (elem.result) {
+                        hv_store(hv, key, strlen(key), SvREFCNT_inc(elem.result), 0);
+                    } else {
+                        hv_store(hv, key, strlen(key), newSV(0), 0);
+                    }
+                    if (elem.error && !res.error) {
+                        res.error = elem.error;
+                    }
+                }
+            }
+            break;
+        }
+
         case REDIS_REPLY_PUSH: // TODO: push handler
         case REDIS_REPLY_ARRAY: {
             AV *av = newAV();
