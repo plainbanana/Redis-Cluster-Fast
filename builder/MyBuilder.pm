@@ -28,8 +28,7 @@ sub _build_dependencies {
             exit 0;
         }
         $make = $gmake;
-    }
-    else {
+    } else {
         $make = $Config{make};
     }
     if (is_debug) {
@@ -69,10 +68,10 @@ sub new {
     my ($class, %args) = @_;
     my $self = $class->SUPER::new(
         %args,
-        generate_ppport_h  => 'src/ppport.h',
-        c_source           => 'src',
-        xs_files           => { './src/Fast.xs' => './lib/Redis/Cluster/Fast.xs', },
-        include_dirs       => [
+        generate_ppport_h => 'src/ppport.h',
+        c_source => 'src',
+        xs_files => { './src/Fast.xs' => './lib/Redis/Cluster/Fast.xs', },
+        include_dirs => [
             'src',
             'deps/build/usr/local/include',
         ],
@@ -82,17 +81,11 @@ sub new {
             "deps/build/usr/local/lib/libhiredis_cluster$Config{lib_ext}",
         ],
 
-        test_requires      => {
-            "Digest::SHA"           => "0",
-            "File::Temp"            => "0",
-            "Parallel::ForkManager" => "0",
-            "Test::Deep"            => "0",
-            "Test::Fatal"           => "0",
-            "Test::LeakTrace"       => "0",
-            "Test::More"            => "0.98",
-            "Test::SharedFork"      => "0",
-            "Test::TCP"             => "0",
-            "Test::UNIXSock"        => "0",
+        test_requires => {
+            "Test::LeakTrace" => "0",
+            "Test::More" => "0.98",
+            "Test::RedisClusterImage" => "0",
+            "Test::SharedFork" => "0",
         },
     );
 
