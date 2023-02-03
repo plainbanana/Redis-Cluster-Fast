@@ -2,7 +2,6 @@ package Test::RedisClusterBoot;
 use warnings;
 use strict;
 use Mouse;
-use namespace::autoclean;
 
 use IO::CaptureOutput qw/capture_exec/;
 use Sub::Retry;

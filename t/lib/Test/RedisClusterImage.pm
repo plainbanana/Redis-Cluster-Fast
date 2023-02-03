@@ -2,7 +2,6 @@ package Test::RedisClusterImage;
 use warnings;
 use strict;
 use Mouse;
-use namespace::autoclean;
 use Test::Docker::Image::Utility qw(docker);
 
 extends 'Test::Docker::Image';
