@@ -47,4 +47,5 @@ sub docker_run {
     return $container_id;
 }
 
+no Mouse;
 1;

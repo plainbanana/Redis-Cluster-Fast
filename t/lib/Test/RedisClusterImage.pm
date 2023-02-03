@@ -16,4 +16,5 @@ sub DESTROY {
     }
 }
 
+no Mouse;
 1;
