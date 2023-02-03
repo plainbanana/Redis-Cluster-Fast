@@ -10,7 +10,7 @@ my $pid = $$;
 
 sub DESTROY {
     my $self = shift;
-    if ($pid == $$) {
+    if ($pid == $$ && !$ENV{TEST_REDIS_CLUSTER_STARTUP_NODES}) {
         docker($_, $self->container_id)
             for qw/kill rm/;
     }
