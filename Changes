@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+    - fix a problem with a patch not being applied
+
 0.02 2023-02-03T18:45:17Z
 
     - fix tests
