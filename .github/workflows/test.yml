@@ -37,10 +37,10 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
-      - name: Install dependencies
-        run: cpanm -nq --installdeps --with-develop --with-recommends .
       - name: Install Minilla
         run: cpanm -n --with-recommends Minilla
+      - name: Install dependencies
+        run: cpanm -nq --installdeps --with-develop --with-recommends .
       - name: Run test
         run: minil test --noauthor
         env:
