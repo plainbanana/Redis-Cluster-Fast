@@ -11,18 +11,20 @@ extends 'Test::Docker::Image::Boot';
 
 use constant TEST_DOCKER_CONTAINER_NAME => 'test_for_perl_redis_cluster_fast';
 
-sub _die {
+sub _skip_tests {
     my $string = shift;
     chomp $string;
     my $message = join " ",
         "Failed to create a docker container.",
         "You can set a TEST_REDIS_CLUSTER_STARTUP_NODES environment to specify redis cluster nodes manually.",
         "(e.g. TEST_REDIS_CLUSTER_STARTUP_NODES=localhost:9000,localhost:9001,localhost:9002 )";
-    die sprintf "[%s] %s ERR: %s", __PACKAGE__, $message, $string;
+    Test::More::plan skip_all =>
+        sprintf "[%s] %s ERR: %s", __PACKAGE__, $message, $string;
 }
 
 sub docker_run {
     my ($self, $ports, $image_tag) = @_;
+    require Test::More;
 
     my ($container_id, $stderr, $exit_code);
     retry(2, 0,
@@ -42,14 +44,14 @@ sub docker_run {
                 return 1;
             }
             if ($stderr) {
-                _die($stderr);
+                _skip_tests($stderr);
                 return 1;
             }
             return 0;
         }
     );
 
-    _die("container_id undefined")
+    _skip_tests("container_id undefined")
         unless defined $container_id;
     return $container_id;
 }
