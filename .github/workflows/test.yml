@@ -40,7 +40,7 @@ jobs:
       - name: Install Minilla
         run: cpanm -n --with-recommends Minilla
       - name: Install dependencies
-        run: cpanm -nq --installdeps --with-develop --with-recommends .
+        run: cpanm -nq --installdeps --with-develop --with-configure .
       - name: Run test
         run: minil test --noauthor
         env:
