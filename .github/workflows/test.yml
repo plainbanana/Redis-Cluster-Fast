@@ -41,6 +41,8 @@ jobs:
         run: cpanm -n --with-recommends Minilla
       - name: Install dependencies
         run: cpanm -nq --installdeps --with-develop --with-configure .
+      - name: Init submodules
+        run: git submodule update --init
       - name: Run test
         run: minil test --noauthor
         env:
