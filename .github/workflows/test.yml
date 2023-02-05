@@ -3,6 +3,14 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
+    services:
+      redis-cluster:
+        image: 'grokzen/redis-cluster:6.0.5'
+        environment:
+           BIND_ADDRESS: '0.0.0.0'
+           INITIAL_PORT: '9000'
+        ports:
+          - '9000-9005:9000-9005'
     strategy:
       matrix:
         perl:
@@ -31,6 +39,10 @@ jobs:
           perl-version: ${{ matrix.perl }}
       - name: Install dependencies
         run: cpanm -nq --installdeps --with-develop --with-recommends .
+      - name: Install Minilla
+        run: cpanm -n --with-recommends Minilla
       - name: Run test
-        run: prove -lr t
+        run: minil test --noauthor
+        env:
+          TEST_REDIS_CLUSTER_STARTUP_NODES: localhost:9000,localhost:9001,localhost:9002,localhost:9003,localhost:9004,localhost:9005
 
