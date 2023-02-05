@@ -6,7 +6,7 @@ jobs:
     services:
       redis-cluster:
         image: 'grokzen/redis-cluster:6.0.5'
-        environment:
+        env:
            BIND_ADDRESS: '0.0.0.0'
            INITIAL_PORT: '9000'
         ports:
