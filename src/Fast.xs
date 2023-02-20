@@ -221,10 +221,7 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
         return 1;
     }
 
-    struct event_config *cfg;
-    cfg = event_config_new();
-    event_config_set_flag(cfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
-    self->cluster_event_base = event_base_new_with_config(cfg);
+    self->cluster_event_base = event_base_new();
     redisClusterLibeventAttach(self->acc, self->cluster_event_base);
 
     DEBUG_MSG("%s", "done connect");
