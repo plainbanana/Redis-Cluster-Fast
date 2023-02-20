@@ -242,15 +242,15 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
     reply_t->done = 0;
     reply_t->self = (void *) self;
 
-    if (self->pid != getpid()) {
+    pid_t current_pid = getpid();
+    if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
-        event_base_free(self->cluster_event_base);
-        redisClusterAsyncFree(self->acc);
-        if (Redis__Cluster__Fast_connect(self)) {
-            DEBUG_MSG("%s", "failed fork");
-            reply_t->error = "failed to fork";
+        if (event_reinit(self->cluster_event_base) != 0) {
+            reply_t->error = "event reinit failed";
+            DEBUG_MSG("%s", reply_t->error);
             return;
         }
+        self->pid = current_pid;
     }
 
     char *cmd;
