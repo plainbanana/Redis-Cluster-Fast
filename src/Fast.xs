@@ -244,7 +244,6 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
         DEBUG_MSG("%s", "pid changed");
         if (event_reinit(self->cluster_event_base) != 0) {
             reply_t->error = "event reinit failed";
-            DEBUG_MSG("%s", reply_t->error);
             return;
         }
         self->pid = current_pid;
