@@ -246,6 +246,7 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
             reply_t->error = "event reinit failed";
             return;
         }
+        redisClusterAsyncDisconnect(self->acc);
         self->pid = current_pid;
     }
 
