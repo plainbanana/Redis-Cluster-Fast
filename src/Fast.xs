@@ -148,6 +148,8 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
 }
 
 void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
+    dTHX;
+
     cmd_reply_context_t *reply_t;
     reply_t = (cmd_reply_context_t *) privdata;
     Redis__Cluster__Fast self = (Redis__Cluster__Fast)reply_t->self;
@@ -157,9 +159,8 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     if (reply) {
         reply_t->ret = Redis__Cluster__Fast_decode_reply(self, reply);
     } else {
-        char *error = (char*)malloc(MAX_ERROR_SIZE);
-        sprintf(error, "%s", cc->errstr);
-        reply_t->error = error;
+        reply_t->ret.result = NULL;
+        reply_t->ret.error = sv_2mortal(newSVpvn(cc->errstr, sizeof(cc->errstr) / sizeof(char)));
     }
 
     reply_t->done = 1;
