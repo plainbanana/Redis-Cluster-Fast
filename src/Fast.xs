@@ -414,8 +414,6 @@ CODE:
 
     Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen, result_context);
 
-    Safefree(argv);
-
     if (result_context->error) {
         ST(0) = &PL_sv_undef;
         ST(1) = sv_2mortal(newSVpvn(result_context->error, strlen(result_context->error)));
@@ -425,6 +423,10 @@ CODE:
         ST(1) = result_context->ret.error ?
                 result_context->ret.error : &PL_sv_undef ;
     }
+
+    Safefree(argv);
+    Safefree(argvlen);
+    Safefree(result_context);
 
     XSRETURN(2);
 }
