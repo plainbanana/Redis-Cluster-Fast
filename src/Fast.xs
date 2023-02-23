@@ -236,6 +236,7 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
                                   cmd_reply_context_t *reply_t) {
     DEBUG_MSG("start: %s", *argv);
+    reply_t->error = NULL;
     reply_t->done = 0;
     reply_t->self = (void *) self;
 
@@ -275,15 +276,11 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
                 reply_t->error = strtok(self->acc->errstr, "");
                 return;
-            } else {
-                reply_t->error = NULL;
             }
         } else {
             reply_t->error = strtok(self->acc->errstr, "");
             return;
         }
-    } else {
-        reply_t->error = NULL;
     }
 
 /* TODO: support coderef arg to run a command in the background
