@@ -47,7 +47,8 @@ typedef struct redis_cluster_fast_reply_s {
 
 typedef struct cmd_reply_context_s {
     void* self;
-    redis_cluster_fast_reply_t ret;
+    SV *result;
+    SV *error;
     int done;
 } cmd_reply_context_t;
 
@@ -156,10 +157,12 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
 
     redisReply *reply = (redisReply *) r;
     if (reply) {
-        reply_t->ret = Redis__Cluster__Fast_decode_reply(self, reply);
+        redis_cluster_fast_reply_t res;
+        res = Redis__Cluster__Fast_decode_reply(self, reply);
+        reply_t->result = res.result;
+        reply_t->error = res.error;
     } else {
-        reply_t->ret.result = NULL;
-        reply_t->ret.error = sv_2mortal(newSVpvn(cc->errstr, sizeof(cc->errstr) / sizeof(char)));
+        reply_t->error = sv_2mortal(newSVpvn(cc->errstr, sizeof(cc->errstr) / sizeof(char)));
     }
 
     reply_t->done = 1;
@@ -240,14 +243,14 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
     DEBUG_MSG("start: %s", *argv);
     reply_t->done = 0;
     reply_t->self = (void *) self;
-    reply_t->ret.result = NULL;
-    reply_t->ret.error = NULL;
+    reply_t->result = NULL;
+    reply_t->error = NULL;
 
     pid_t current_pid = getpid();
     if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
         if (event_reinit(self->cluster_event_base) != 0) {
-            reply_t->ret.error = sv_2mortal(newSVpvf("%s", "event reinit failed"));
+            reply_t->error = sv_2mortal(newSVpvf("%s", "event reinit failed"));
             return;
         }
         redisClusterAsyncDisconnect(self->acc);
@@ -259,7 +262,7 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
     len = redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
-        reply_t->ret.error = sv_2mortal(newSVpvf("%s", "memory allocation error"));
+        reply_t->error = sv_2mortal(newSVpvf("%s", "memory allocation error"));
         return;
     }
 
@@ -277,11 +280,11 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
             status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, (int) len);
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
-                reply_t->ret.error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
+                reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
                 return;
             }
         } else {
-            reply_t->ret.error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
+            reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
             return;
         }
     }
@@ -417,10 +420,10 @@ CODE:
 
     Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen, result_context);
 
-    ST(0) = result_context->ret.result ?
-            result_context->ret.result : &PL_sv_undef;
-    ST(1) = result_context->ret.error ?
-            result_context->ret.error : &PL_sv_undef ;
+    ST(0) = result_context->result ?
+            result_context->result : &PL_sv_undef;
+    ST(1) = result_context->error ?
+            result_context->error : &PL_sv_undef ;
 
     Safefree(argv);
     Safefree(argvlen);
