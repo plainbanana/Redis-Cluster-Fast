@@ -152,7 +152,7 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
 
     cmd_reply_context_t *reply_t;
     reply_t = (cmd_reply_context_t *) privdata;
-    Redis__Cluster__Fast self = (Redis__Cluster__Fast)reply_t->self;
+    Redis__Cluster__Fast self = (Redis__Cluster__Fast) reply_t->self;
     DEBUG_MSG("replycb %s", "start");
 
     redisReply *reply = (redisReply *) r;
