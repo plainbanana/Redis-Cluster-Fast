@@ -47,8 +47,8 @@ typedef struct redis_cluster_fast_reply_s {
 
 typedef struct cmd_reply_context_s {
     void* self;
-    redis_cluster_fast_reply_t ret;
-    char *error;
+    SV *result;
+    SV *error;
     int done;
 } cmd_reply_context_t;
 
@@ -148,18 +148,21 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
 }
 
 void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
+    dTHX;
+
     cmd_reply_context_t *reply_t;
     reply_t = (cmd_reply_context_t *) privdata;
-    Redis__Cluster__Fast self = (Redis__Cluster__Fast)reply_t->self;
+    Redis__Cluster__Fast self = (Redis__Cluster__Fast) reply_t->self;
     DEBUG_MSG("replycb %s", "start");
 
     redisReply *reply = (redisReply *) r;
     if (reply) {
-        reply_t->ret = Redis__Cluster__Fast_decode_reply(self, reply);
+        redis_cluster_fast_reply_t res;
+        res = Redis__Cluster__Fast_decode_reply(self, reply);
+        reply_t->result = res.result;
+        reply_t->error = res.error;
     } else {
-        char *error = (char*)malloc(MAX_ERROR_SIZE);
-        sprintf(error, "%s", cc->errstr);
-        reply_t->error = error;
+        reply_t->error = sv_2mortal(newSVpvn(cc->errstr, sizeof(cc->errstr) / sizeof(char)));
     }
 
     reply_t->done = 1;
@@ -235,15 +238,19 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
 
 void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
                                   cmd_reply_context_t *reply_t) {
+    dTHX;
+
     DEBUG_MSG("start: %s", *argv);
     reply_t->done = 0;
     reply_t->self = (void *) self;
+    reply_t->result = NULL;
+    reply_t->error = NULL;
 
     pid_t current_pid = getpid();
     if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
         if (event_reinit(self->cluster_event_base) != 0) {
-            reply_t->error = "event reinit failed";
+            reply_t->error = sv_2mortal(newSVpvf("%s", "event reinit failed"));
             return;
         }
         redisClusterAsyncDisconnect(self->acc);
@@ -255,7 +262,7 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
     len = redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
-        reply_t->error = "memory allocation error";
+        reply_t->error = sv_2mortal(newSVpvf("%s", "memory allocation error"));
         return;
     }
 
@@ -273,17 +280,13 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
             status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, (int) len);
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
-                reply_t->error = strtok(self->acc->errstr, "");
+                reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
                 return;
-            } else {
-                reply_t->error = NULL;
             }
         } else {
-            reply_t->error = strtok(self->acc->errstr, "");
+            reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
             return;
         }
-    } else {
-        reply_t->error = NULL;
     }
 
 /* TODO: support coderef arg to run a command in the background
@@ -417,17 +420,14 @@ CODE:
 
     Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen, result_context);
 
-    Safefree(argv);
+    ST(0) = result_context->result ?
+            result_context->result : &PL_sv_undef;
+    ST(1) = result_context->error ?
+            result_context->error : &PL_sv_undef ;
 
-    if (result_context->error) {
-        ST(0) = &PL_sv_undef;
-        ST(1) = sv_2mortal(newSVpvn(result_context->error, strlen(result_context->error)));
-    } else {
-        ST(0) = result_context->ret.result ?
-                result_context->ret.result : &PL_sv_undef;
-        ST(1) = result_context->ret.error ?
-                result_context->ret.error : &PL_sv_undef ;
-    }
+    Safefree(argv);
+    Safefree(argvlen);
+    Safefree(result_context);
 
     XSRETURN(2);
 }
