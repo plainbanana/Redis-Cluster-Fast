@@ -296,12 +296,12 @@ __set_servers(Redis::Cluster::Fast self, char* hostnames)
 CODE:
 {
     if (self->hostnames) {
-        free(self->hostnames);
+        Safefree(self->hostnames);
         self->hostnames = NULL;
     }
 
     if(hostnames) {
-        self->hostnames = (char *) malloc(strlen(hostnames) + 1);
+        Newx(self->hostnames, sizeof(char) * (strlen(hostnames) + 1), char);
         strcpy(self->hostnames, hostnames);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
     }
@@ -402,7 +402,7 @@ CODE:
 
     if (self->hostnames) {
         DEBUG_MSG("%s", "free hostnames");
-        free(self->hostnames);
+        Safefree(self->hostnames);
         self->hostnames = NULL;
     }
 
