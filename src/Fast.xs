@@ -221,10 +221,7 @@ int Redis__Cluster__Fast_connect(Redis__Cluster__Fast self){
         return 1;
     }
 
-    struct event_config *cfg;
-    cfg = event_config_new();
-    event_config_set_flag(cfg, EVENT_BASE_FLAG_EPOLL_USE_CHANGELIST);
-    self->cluster_event_base = event_base_new_with_config(cfg);
+    self->cluster_event_base = event_base_new();
     redisClusterLibeventAttach(self->acc, self->cluster_event_base);
 
     DEBUG_MSG("%s", "done connect");
@@ -242,15 +239,15 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
     reply_t->done = 0;
     reply_t->self = (void *) self;
 
-    if (self->pid != getpid()) {
+    pid_t current_pid = getpid();
+    if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
-        event_base_free(self->cluster_event_base);
-        redisClusterAsyncFree(self->acc);
-        if (Redis__Cluster__Fast_connect(self)) {
-            DEBUG_MSG("%s", "failed fork");
-            reply_t->error = "failed to fork";
+        if (event_reinit(self->cluster_event_base) != 0) {
+            reply_t->error = "event reinit failed";
             return;
         }
+        redisClusterAsyncDisconnect(self->acc);
+        self->pid = current_pid;
     }
 
     char *cmd;
