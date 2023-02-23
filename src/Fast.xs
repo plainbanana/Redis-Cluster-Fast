@@ -52,12 +52,6 @@ typedef struct cmd_reply_context_s {
     int done;
 } cmd_reply_context_t;
 
-typedef struct event_base_foreach_context_s {
-    void *self;
-    short target_event_flag;
-    bool matched;
-} event_base_foreach_context_t;
-
 typedef struct redis_cluster_fast_s {
     redisClusterAsyncContext* acc;
     struct event_base* cluster_event_base;
@@ -169,38 +163,6 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     event_base_loopbreak(self->cluster_event_base);
 }
 
-/*
-int eventbaseCallback(const struct event_base *base, const struct event *event, void *privdata) {
-    event_base_foreach_context_t *event_info;
-    event_info = (event_base_foreach_context_t *) privdata;
-    Redis__Cluster__Fast self = (Redis__Cluster__Fast) event_info->self;
-
-    int matched = event_get_events(event) & event_info->target_event_flag;
-    if (matched) {
-        event_info->matched = true;
-        DEBUG_MSG("%s %d", "given flag found", event_info->target_event_flag);
-        return 1;
-    }
-    return 0;
-}
-
-void wait_for_event_with_flag(Redis__Cluster__Fast self, short target_event_flag) {
-    DEBUG_EVENT_BASE();
-    event_base_foreach_context_t *event_info =
-            (event_base_foreach_context_t *) malloc(sizeof(event_base_foreach_context_t));
-    event_info->self = (void *) self;
-    event_info->target_event_flag = target_event_flag;
-    event_base_foreach_event(self->cluster_event_base, eventbaseCallback, event_info);
-    if (event_info->matched) {
-        int status = event_base_loop(self->cluster_event_base, EVLOOP_ONCE | EVLOOP_NO_EXIT_ON_EMPTY);
-        DEBUG_MSG("event loop done. status %d", status);
-        DEBUG_EVENT_BASE();
-    } else {
-        return;
-    }
-};
-*/
-
 void wait_for_event(Redis__Cluster__Fast self) {
     DEBUG_EVENT_BASE();
     int status = event_base_dispatch(self->cluster_event_base);
@@ -289,11 +251,6 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
         }
     }
 
-/* TODO: support coderef arg to run a command in the background
-    // handle write only
-    wait_for_event_with_flag(self, EV_WRITE);
-*/
-
     while (1) {
         wait_for_event(self);
         if (reply_t->done) {
@@ -339,12 +296,12 @@ __set_servers(Redis::Cluster::Fast self, char* hostnames)
 CODE:
 {
     if (self->hostnames) {
-        free(self->hostnames);
+        Safefree(self->hostnames);
         self->hostnames = NULL;
     }
 
     if(hostnames) {
-        self->hostnames = (char *) malloc(strlen(hostnames) + 1);
+        Newx(self->hostnames, sizeof(char) * (strlen(hostnames) + 1), char);
         strcpy(self->hostnames, hostnames);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
     }
@@ -445,7 +402,7 @@ CODE:
 
     if (self->hostnames) {
         DEBUG_MSG("%s", "free hostnames");
-        free(self->hostnames);
+        Safefree(self->hostnames);
         self->hostnames = NULL;
     }
 
