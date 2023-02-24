@@ -37,6 +37,8 @@ jobs:
         uses: shogo82148/actions-setup-perl@v1
         with:
           perl-version: ${{ matrix.perl }}
+      - name: Install Valgrind
+        run: sudo apt-get install -y valgrind
       - name: Install Minilla
         run: cpanm -n --with-recommends Minilla
       - name: Install dependencies
