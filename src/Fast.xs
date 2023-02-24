@@ -406,6 +406,6 @@ CODE:
         self->hostnames = NULL;
     }
 
-    Safefree(self);
     DEBUG_MSG("%s", "done");
+    Safefree(self);
 }
