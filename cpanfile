@@ -12,6 +12,7 @@ on 'test' => sub {
 };
 
 on 'configure' => sub {
+    requires 'Devel::CheckBin';
     requires 'File::Spec';
     requires 'File::Which';
     requires 'File::chdir';

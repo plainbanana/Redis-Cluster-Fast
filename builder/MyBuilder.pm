@@ -4,6 +4,7 @@ use warnings FATAL => 'all';
 use 5.008005;
 use base 'Module::Build::XSUtil';
 use Config;
+use Devel::CheckBin qw(check_bin);
 use File::Spec;
 use File::Which qw(which);
 use File::chdir;
@@ -19,6 +20,13 @@ sub _build_dependencies {
     my $abs = File::Spec->rel2abs('./deps');
     # Skip if already built
     return if -e "$abs/build";
+
+    check_bin('patch');
+    # libevent
+    check_bin('autoconf');
+    check_bin('automake');
+    check_bin('libtoolize');
+    check_bin('pkg-config');
 
     my $make;
     if ($^O =~ m/(bsd|dragonfly)$/ && $^O !~ m/gnukfreebsd$/) {
