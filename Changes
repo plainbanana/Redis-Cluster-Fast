@@ -3,7 +3,7 @@ Revision history for Perl extension Redis-Cluster-Fast
 {{$NEXT}}
 
     - Fix memory leaks.
-    - Add a test using Test::Valgrind
+    - Add a test using Test::Valgrind.
     - Fix for building dependencies.
     - Fix behavior when forked to reduce calls to Redis command to retrieve cluster topology.
     - Refactoring.
