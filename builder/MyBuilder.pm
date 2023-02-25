@@ -41,6 +41,8 @@ sub _build_dependencies {
         local $CWD = "deps/libevent";
         $self->do_system('./autogen.sh');
         $self->do_system('./configure',
+            '--disable-openssl',
+            '--disable-samples',
             '--disable-shared',
             '--with-pic',
             '--prefix',
