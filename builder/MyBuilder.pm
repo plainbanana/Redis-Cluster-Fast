@@ -41,6 +41,8 @@ sub _build_dependencies {
         local $CWD = "deps/libevent";
         $self->do_system('./autogen.sh');
         $self->do_system('./configure',
+            '--disable-openssl',
+            '--disable-samples',
             '--disable-shared',
             '--with-pic',
             '--prefix',
@@ -80,17 +82,6 @@ sub new {
             "deps/build/usr/local/lib/libhiredis$Config{lib_ext}",
             "deps/build/usr/local/lib/libhiredis_cluster$Config{lib_ext}",
         ],
-
-        test_requires => {
-            'IO::CaptureOutput' => '0',
-            'Mouse' => '0',
-            'Sub::Retry' => '0',
-            'Test::Docker::Image' => '0.05',
-            'Test::LeakTrace' => '0',
-            'Test::More' => '0.98',
-            'Test::SharedFork' => '0',
-            'Test::Valgrind' => '0',
-        },
     );
 
     $self->_build_dependencies;
