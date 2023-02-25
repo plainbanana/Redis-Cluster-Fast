@@ -53,7 +53,7 @@ sub _build_dependencies {
             '--disable-shared',
             '--with-pic',
             '--prefix',
-            "$abs/build/usr/local"
+            "$abs/build/usr/local",
         );
         $self->do_system($make);
         $self->do_system($make, 'install');
@@ -69,7 +69,7 @@ sub _build_dependencies {
         "USE_SSL=0",
         "DESTDIR=$abs/build",
         'clean',
-        'install'
+        'install',
     );
 }
 
