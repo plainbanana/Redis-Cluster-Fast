@@ -29,6 +29,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
+            "Devel::CheckBin" : "0",
             "File::Spec" : "0",
             "File::Which" : "0",
             "File::chdir" : "0",
