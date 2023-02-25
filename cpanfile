@@ -8,6 +8,7 @@ on 'test' => sub {
     requires 'Test::LeakTrace';
     requires 'Test::More', '0.98';
     requires 'Test::SharedFork';
+    requires 'Test::Valgrind';
 };
 
 on 'configure' => sub {

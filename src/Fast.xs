@@ -208,24 +208,25 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
     reply_t->result = NULL;
     reply_t->error = NULL;
 
+    char *cmd = NULL;
+
     pid_t current_pid = getpid();
     if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
         if (event_reinit(self->cluster_event_base) != 0) {
             reply_t->error = sv_2mortal(newSVpvf("%s", "event reinit failed"));
-            return;
+            goto end;
         }
         redisClusterAsyncDisconnect(self->acc);
         self->pid = current_pid;
     }
 
-    char *cmd;
     long long int len;
     len = redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
         reply_t->error = sv_2mortal(newSVpvf("%s", "memory allocation error"));
-        return;
+        goto end;
     }
 
     int status = redisClusterAsyncFormattedCommand(self->acc, replyCallback, reply_t, cmd, (int) len);
@@ -243,11 +244,11 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
                 reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
-                return;
+                goto end;
             }
         } else {
             reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
-            return;
+            goto end;
         }
     }
 
@@ -256,6 +257,11 @@ void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const cha
         if (reply_t->done) {
             break;
         }
+    }
+
+end:
+    if (cmd != NULL) {
+        hi_free(cmd);
     }
 }
 
@@ -406,6 +412,6 @@ CODE:
         self->hostnames = NULL;
     }
 
-    Safefree(self);
     DEBUG_MSG("%s", "done");
+    Safefree(self);
 }
