@@ -120,7 +120,7 @@ Redis::Cluster::Fast is like L<Redis::Fast|https://github.com/shogo82148/Redis-F
 
 Require Redis 6 or higher to support L<RESP3|https://github.com/antirez/RESP3/blob/master/spec.md>.
 
-To build this module you need at least automake, libtool, patch are installed on your system.
+To build this module you need at least autoconf, automake, libtool, patch, pkg-config are installed on your system.
 
 =head1 METHODS
 
