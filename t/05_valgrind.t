@@ -17,6 +17,23 @@ my $redis = Redis::Cluster::Fast->new(
     max_retry => 10,
 );
 
+$redis->del('valgrind');
 $redis->set('valgrind', 123);
+
+my $pid = fork;
+if ($pid == 0) {
+    # child
+    $redis->incr('valgrind');
+    $redis->cluster_info;
+    exit 0;
+} else {
+    # parent
+    $redis->incr('valgrind');
+    $redis->cluster_info;
+    waitpid($pid, 0);
+}
+
+$redis->get('valgrind');
+$redis->cluster_info;
 
 done_testing;
