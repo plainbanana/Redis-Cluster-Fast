@@ -8,7 +8,6 @@ use Devel::CheckBin qw(check_bin);
 use File::Spec;
 use File::Which qw(which);
 use File::chdir;
-use Data::Dumper;
 
 sub is_debug {
     -d '.git';
