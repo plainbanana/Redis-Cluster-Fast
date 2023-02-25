@@ -21,34 +21,3 @@
     fun:XS_DynaLoader_dl_load_file
     fun:Perl_pp_entersub
 }
-{
-    PerlSuppressionExtra2
-    Memcheck:Leak
-    match-leak-kinds: reachable
-    fun:malloc
-    fun:Perl_safesysmalloc
-    fun:Perl_re_compile
-    fun:boot_Package__Stash__XS
-    fun:Perl_pp_entersub
-}
-{
-    PerlSuppressionExtra3
-    Memcheck:Leak
-    match-leak-kinds: reachable
-    fun:realloc
-    fun:Perl_safesysrealloc
-    fun:S_add_data
-    fun:Perl_re_compile
-    fun:boot_Package__Stash__XS
-    fun:Perl_pp_entersub
-}
-{
-    PerlSuppressionExtra4
-    Memcheck:Leak
-    match-leak-kinds: reachable
-    fun:calloc
-    fun:Perl_safesyscalloc
-    fun:Perl_re_compile
-    fun:boot_Package__Stash__XS
-    fun:Perl_pp_entersub
-}
