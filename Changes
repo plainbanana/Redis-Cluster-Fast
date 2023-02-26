@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+    - Explicitly do disconnect before free async context.
+
 0.08 2023-02-26T13:47:23Z
 
     - Refactoring.
