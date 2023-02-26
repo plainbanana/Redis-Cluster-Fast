@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+0.08 2023-02-26T13:47:23Z
+
     - Refactoring.
 
 0.07 2023-02-25T18:42:41Z
