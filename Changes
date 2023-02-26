@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+    - Fix error formatting #12
+
 0.081 2023-02-26T16:39:11Z
 
     - Explicitly do disconnect before free async context.

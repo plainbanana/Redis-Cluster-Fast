@@ -76,7 +76,7 @@
          "web" : "https://github.com/plainbanana/Redis-Cluster-Fast"
       }
    },
-   "version" : "0.081",
+   "version" : "0.082",
    "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 0
 }
