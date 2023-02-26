@@ -268,7 +268,7 @@ MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
 
 PROTOTYPES: DISABLE
 
-SV*
+void
 _new(char* cls);
 PREINIT:
 redis_cluster_fast_t* self;
@@ -283,8 +283,6 @@ CODE:
     DEBUG_MSG("return %p", ST(0));
     XSRETURN(1);
 }
-OUTPUT:
-    RETVAL
 
 int
 __set_debug(Redis::Cluster::Fast self, int val)
