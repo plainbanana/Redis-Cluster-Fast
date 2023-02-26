@@ -64,9 +64,8 @@ typedef struct redis_cluster_fast_s {
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
 
 static redis_cluster_fast_reply_t
-Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) {
+Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *reply) {
     redis_cluster_fast_reply_t res = {NULL, NULL};
-    dTHX;
 
     switch (reply->type) {
         case REDIS_REPLY_ERROR:
@@ -102,7 +101,7 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
                     key = reply->element[i]->str;
                 } else {
                     redis_cluster_fast_reply_t elem = {NULL, NULL};
-                    elem = Redis__Cluster__Fast_decode_reply(self, reply->element[i]);
+                    elem = Redis__Cluster__Fast_decode_reply(aTHX_ self, reply->element[i]);
                     if (elem.result) {
                         hv_store(hv, key, strlen(key), SvREFCNT_inc(elem.result), 0);
                     } else {
@@ -124,7 +123,7 @@ Redis__Cluster__Fast_decode_reply(Redis__Cluster__Fast self, redisReply *reply) 
 
             for (i = 0; i < reply->elements; i++) {
                 redis_cluster_fast_reply_t elem = {NULL, NULL};
-                elem = Redis__Cluster__Fast_decode_reply(self, reply->element[i]);
+                elem = Redis__Cluster__Fast_decode_reply(aTHX_ self, reply->element[i]);
                 if (elem.result) {
                     av_push(av, SvREFCNT_inc(elem.result));
                 } else {
@@ -152,7 +151,7 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     redisReply *reply = (redisReply *) r;
     if (reply) {
         redis_cluster_fast_reply_t res;
-        res = Redis__Cluster__Fast_decode_reply(self, reply);
+        res = Redis__Cluster__Fast_decode_reply(aTHX_ self, reply);
         reply_t->result = res.result;
         reply_t->error = res.error;
     } else {
@@ -198,10 +197,8 @@ cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
     return self->acc->cc->table[slot_num];
 }
 
-void Redis__Cluster__Fast_run_cmd(Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
+void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
                                   cmd_reply_context_t *reply_t) {
-    dTHX;
-
     DEBUG_MSG("start: %s", *argv);
     reply_t->done = 0;
     reply_t->self = (void *) self;
@@ -381,7 +378,7 @@ CODE:
 
     DEBUG_MSG("raw_cmd : %s", *argv);
 
-    Redis__Cluster__Fast_run_cmd(self, argc, (const char **) argv, argvlen, result_context);
+    Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
 
     ST(0) = result_context->result ?
             result_context->result : &PL_sv_undef;
