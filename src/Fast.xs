@@ -155,7 +155,8 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
         reply_t->result = res.result;
         reply_t->error = res.error;
     } else {
-        reply_t->error = sv_2mortal(newSVpvn(cc->errstr, sizeof(cc->errstr) / sizeof(char)));
+        DEBUG_MSG("error: err=%d errstr=%s", cc->err, cc->errstr);
+        reply_t->error = sv_2mortal(newSVpvf("%s", cc->errstr));
     }
 
     reply_t->done = 1;
@@ -240,11 +241,12 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
             status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, (int) len);
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
-                reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
+                reply_t->error = sv_2mortal(newSVpvf("%s", self->acc->errstr));
                 goto end;
             }
         } else {
-            reply_t->error = sv_2mortal(newSVpvn(self->acc->errstr, sizeof(self->acc->errstr) / sizeof(char)));
+            DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
+            reply_t->error = sv_2mortal(newSVpvf("%s", self->acc->errstr));
             goto end;
         }
     }
