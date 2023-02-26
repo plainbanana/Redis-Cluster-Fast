@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp qw/croak confess/;
 
-our $VERSION = "0.07";
+our $VERSION = "0.08";
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
