@@ -27,4 +27,11 @@ $redis->hset('myhash', 'field1', 'Hello');
 $redis->hset('myhash', 'field2', 'ByeBye');
 is_deeply scalar $redis->hgetall('myhash'), { field1 => 'Hello', field2 => 'ByeBye' };
 
+my $euro = "\x{20ac}";
+ok ord($euro) > 255, 'is a wide character';
+eval {
+    $redis->set('euro', $euro);
+};
+like $@, qr/^command sent is not an octet sequence in the native encoding \(Latin-1\)\./;
+
 done_testing;

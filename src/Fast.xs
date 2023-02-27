@@ -368,14 +368,9 @@ PPCODE:
     Newx(result_context, sizeof(cmd_reply_context_t), cmd_reply_context_t);
 
     for (i = 0; i < argc; i++) {
-        if(!sv_utf8_downgrade(ST(i + 1), 1)) {
-            croak("command sent is not an octet sequence in the native encoding (Latin-1). Consider using debug mode to see the command itself.");
-        }
         argv[i] = SvPV(ST(i + 1), len);
         argvlen[i] = len;
     }
-
-    DEBUG_MSG("raw_cmd : %s", *argv);
 
     Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
 
