@@ -272,15 +272,14 @@ void
 _new(char* cls);
 PREINIT:
 redis_cluster_fast_t* self;
-CODE:
+PPCODE:
 {
     srand((unsigned int) time(NULL));
 
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
-    DEBUG_MSG("%s", "start new");
+    EXTEND(SP, 1);
     ST(0) = sv_newmortal();
     sv_setref_pv(ST(0), cls, (void*)self);
-    DEBUG_MSG("return %p", ST(0));
     XSRETURN(1);
 }
 
