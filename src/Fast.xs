@@ -372,8 +372,6 @@ PPCODE:
         argvlen[i] = len;
     }
 
-    DEBUG_MSG("raw_cmd : %s", *argv);
-
     Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
 
     EXTEND(SP, 2);
