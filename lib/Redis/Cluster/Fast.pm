@@ -47,11 +47,6 @@ sub AUTOLOAD {
 
     my $method = sub {
         my $self = shift;
-        grep {
-            utf8::downgrade($_, 1)
-                or confess 'command sent is not an octet sequence in the native encoding (Latin-1).';
-        } @_;
-
         my ($reply, $error) = $self->__std_cmd(@command, @_);
         confess "[$command] $error" if defined $error;
         if (wantarray) {
