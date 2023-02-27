@@ -13,7 +13,7 @@ use Test::More; # for Test::RedisCluster
 use Test::RedisCluster qw/get_startup_nodes/;
 my $nodes = get_startup_nodes;
 
-print "Redis::Fast is " . $Redis::Cluster::Fast::VERSION . "\n";
+print "Redis::Cluster::Fast is " . $Redis::Cluster::Fast::VERSION . "\n";
 print "Redis::ClusterRider is " . $Redis::ClusterRider::VERSION . "\n";
 
 my $xs = Redis::Cluster::Fast->new(
