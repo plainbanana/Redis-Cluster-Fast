@@ -272,15 +272,14 @@ void
 _new(char* cls);
 PREINIT:
 redis_cluster_fast_t* self;
-CODE:
+PPCODE:
 {
     srand((unsigned int) time(NULL));
 
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
-    DEBUG_MSG("%s", "start new");
+    EXTEND(SP, 1);
     ST(0) = sv_newmortal();
     sv_setref_pv(ST(0), cls, (void*)self);
-    DEBUG_MSG("return %p", ST(0));
     XSRETURN(1);
 }
 
@@ -357,7 +356,7 @@ PREINIT:
     size_t* argvlen;
     STRLEN len;
     int argc, i;
-CODE:
+PPCODE:
 {
     if(!self->acc) {
        croak("Not connected to any server");
@@ -379,6 +378,8 @@ CODE:
     DEBUG_MSG("raw_cmd : %s", *argv);
 
     Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
+
+    EXTEND(SP, 2);
 
     ST(0) = result_context->result ?
             result_context->result : &PL_sv_undef;
