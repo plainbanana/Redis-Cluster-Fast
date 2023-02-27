@@ -356,7 +356,7 @@ PREINIT:
     size_t* argvlen;
     STRLEN len;
     int argc, i;
-CODE:
+PPCODE:
 {
     if(!self->acc) {
        croak("Not connected to any server");
@@ -378,6 +378,8 @@ CODE:
     DEBUG_MSG("raw_cmd : %s", *argv);
 
     Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
+
+    EXTEND(SP, 2);
 
     ST(0) = result_context->result ?
             result_context->result : &PL_sv_undef;
