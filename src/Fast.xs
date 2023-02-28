@@ -20,7 +20,6 @@ extern "C" {
 #define NEED_newSVpvn_flags
 #include "ppport.h"
 
-#define MAX_ERROR_SIZE 256
 #define ONE_SECOND_TO_MICRO 1000000
 
 #define DEBUG_MSG(fmt, ...) \
