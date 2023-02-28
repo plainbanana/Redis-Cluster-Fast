@@ -298,7 +298,7 @@ CODE:
         self->hostnames = NULL;
     }
 
-    if(hostnames) {
+    if (hostnames) {
         Newx(self->hostnames, sizeof(char) * (strlen(hostnames) + 1), char);
         strcpy(self->hostnames, hostnames);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
@@ -354,7 +354,7 @@ PREINIT:
     int argc, i;
 PPCODE:
 {
-    if(!self->acc) {
+    if (!self->acc) {
        croak("Not connected to any server");
     }
 
