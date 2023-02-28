@@ -20,7 +20,6 @@ extern "C" {
 #define NEED_newSVpvn_flags
 #include "ppport.h"
 
-#define MAX_ERROR_SIZE 256
 #define ONE_SECOND_TO_MICRO 1000000
 
 #define DEBUG_MSG(fmt, ...) \
@@ -35,27 +34,22 @@ extern "C" {
         event_base_dump_events(self->cluster_event_base, stderr);       \
     }
 
-#define DEBUG_MSG_FORCE(fmt, ...) \
-    fprintf(stderr, "[%d][%d][%s:%d:%s]: ", getpid(), getppid(), __FILE__, __LINE__, __func__);  \
-    fprintf(stderr, fmt, __VA_ARGS__);                              \
-    fprintf(stderr, "\n");
-
 typedef struct redis_cluster_fast_reply_s {
     SV *result;
     SV *error;
 } redis_cluster_fast_reply_t;
 
 typedef struct cmd_reply_context_s {
-    void* self;
+    void *self;
     SV *result;
     SV *error;
     int done;
 } cmd_reply_context_t;
 
 typedef struct redis_cluster_fast_s {
-    redisClusterAsyncContext* acc;
-    struct event_base* cluster_event_base;
-    char* hostnames;
+    redisClusterAsyncContext *acc;
+    struct event_base *cluster_event_base;
+    char *hostnames;
     int debug;
     int max_retry;
     struct timeval connect_timeout;
