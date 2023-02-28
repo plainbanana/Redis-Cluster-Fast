@@ -34,11 +34,6 @@ extern "C" {
         event_base_dump_events(self->cluster_event_base, stderr);       \
     }
 
-#define DEBUG_MSG_FORCE(fmt, ...) \
-    fprintf(stderr, "[%d][%d][%s:%d:%s]: ", getpid(), getppid(), __FILE__, __LINE__, __func__);  \
-    fprintf(stderr, fmt, __VA_ARGS__);                              \
-    fprintf(stderr, "\n");
-
 typedef struct redis_cluster_fast_reply_s {
     SV *result;
     SV *error;
