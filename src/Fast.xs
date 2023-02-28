@@ -274,7 +274,6 @@ redis_cluster_fast_t* self;
 PPCODE:
 {
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
-    EXTEND(SP, 1);
     ST(0) = sv_newmortal();
     sv_setref_pv(ST(0), cls, (void*)self);
     XSRETURN(1);
@@ -370,8 +369,6 @@ PPCODE:
     }
 
     Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
-
-    EXTEND(SP, 2);
 
     ST(0) = result_context->result ?
             result_context->result : &PL_sv_undef;
