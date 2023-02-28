@@ -12,6 +12,12 @@ no_leaks_ok {
     my $redis = Redis::Cluster::Fast->new(
         startup_nodes => get_startup_nodes,
     );
+
+    eval {
+        # wide character
+        $redis->set('euro', "\x{20ac}");
+    };
+
     $redis->ping;
     $redis->CLUSTER_INFO();
     $redis->eval(
