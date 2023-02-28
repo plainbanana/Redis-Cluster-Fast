@@ -368,12 +368,6 @@ PPCODE:
     Newx(result_context, sizeof(cmd_reply_context_t), cmd_reply_context_t);
 
     for (i = 0; i < argc; i++) {
-        if(!sv_utf8_downgrade(ST(i + 1), 1)) {
-            Safefree(argv);
-            Safefree(argvlen);
-            Safefree(result_context);
-            croak("command sent is not an octet sequence in the native encoding (Latin-1).");
-        }
         argv[i] = SvPV(ST(i + 1), len);
         argvlen[i] = len;
     }
