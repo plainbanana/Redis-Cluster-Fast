@@ -260,6 +260,11 @@ end:
 
 MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
 
+BOOT:
+{
+    srand((unsigned int) time(NULL));
+}
+
 PROTOTYPES: DISABLE
 
 void
@@ -268,8 +273,6 @@ PREINIT:
 redis_cluster_fast_t* self;
 PPCODE:
 {
-    srand((unsigned int) time(NULL));
-
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
     EXTEND(SP, 1);
     ST(0) = sv_newmortal();
