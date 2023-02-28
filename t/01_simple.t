@@ -32,6 +32,14 @@ ok ord($euro) > 255, 'is a wide character';
 eval {
     $redis->set('euro', $euro);
 };
-like $@, qr/^command sent is not an octet sequence in the native encoding \(Latin-1\)\./;
+like $@, qr/^command sent is not an octet sequence in the native encoding \(Latin-1\)\./, 'can not convert to Latin-1';
+
+my $to_utf8 = my $to_latin1 = "test\x{80}";
+utf8::upgrade($to_utf8);
+utf8::downgrade($to_latin1);
+is $to_utf8, $to_latin1, 'in Perl, equal';
+$redis->del($to_latin1);
+$redis->set($to_utf8, 'unicode');
+is $redis->get($to_latin1), 'unicode', 'got value will be equal';
 
 done_testing;

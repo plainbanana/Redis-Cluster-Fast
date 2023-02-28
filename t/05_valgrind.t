@@ -20,6 +20,11 @@ my $redis = Redis::Cluster::Fast->new(
 $redis->del('valgrind');
 $redis->set('valgrind', 123);
 
+eval {
+    # wide character
+    $redis->set('euro', "\x{20ac}");
+};
+
 my $pid = fork;
 if ($pid == 0) {
     # child
