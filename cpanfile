@@ -15,5 +15,5 @@ on 'configure' => sub {
     requires 'File::Spec';
     requires 'File::Which';
     requires 'File::chdir';
-    requires 'Module::Build::XSUtil' => '>=0.02';
+    requires 'Module::Build::XSUtil', '>=0.02';
 };
