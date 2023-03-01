@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+0.084 2023-03-01T18:16:05Z
+
     - Better testing.
     - To run tests that use local application(s), require AUTOMATED_TESTING.
     - Fix Changes indent.
