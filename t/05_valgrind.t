@@ -7,7 +7,7 @@ eval {
 };
 plan skip_all => 'Test::Valgrind is required to test your distribution with valgrind' if $@;
 
-use Test::RedisCluster qw/get_startup_nodes/;
+use Test::Docker::RedisCluster qw/get_startup_nodes/;
 use Redis::Cluster::Fast;
 
 my $redis = Redis::Cluster::Fast->new(
