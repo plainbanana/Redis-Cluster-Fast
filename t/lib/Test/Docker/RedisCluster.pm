@@ -17,6 +17,10 @@ use constant {
     TEST_DOCKER_CONTAINER_NAME => 'test_for_perl_redis_cluster_fast',
 };
 
+require Test::More;
+Test::More::plan skip_all =>
+    'Skip tests using local Docker / Redis Cluster because AUTOMATED_TESTING is not set' unless $ENV{AUTOMATED_TESTING};
+
 my $pid = $$;
 
 sub _debug_warn {
@@ -49,8 +53,6 @@ sub _get_container_ports {
 }
 
 sub _start_redis_cluster {
-    require Test::More;
-
     my $initial_port = "INITIAL_PORT=" . REDIS_CLUSTER_INITIAL_PORT;
 
     my $container_ports = _get_container_ports;

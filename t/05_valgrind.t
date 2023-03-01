@@ -1,13 +1,19 @@
 use strict;
 use warnings FATAL => 'all';
 use lib './t/lib';
-use Test::More;
+
+BEGIN {
+    use Test::More;
+    plan skip_all =>
+        'Skip tests using local Docker / Redis Cluster / Valgrind because AUTOMATED_TESTING is not set' unless $ENV{AUTOMATED_TESTING};
+};
+
 eval {
     use Test::Valgrind (extra_supps => [ './t/lib/memcheck-extra.supp' ]);
 };
 plan skip_all => 'Test::Valgrind is required to test your distribution with valgrind' if $@;
 
-use Test::Docker::RedisCluster qw/get_startup_nodes/;
+use Test::Docker::RedisCluster qw/get_startup_nodes/; # Valgrind check this module too
 use Redis::Cluster::Fast;
 
 my $redis = Redis::Cluster::Fast->new(
