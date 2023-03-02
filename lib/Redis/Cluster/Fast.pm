@@ -43,7 +43,7 @@ our $AUTOLOAD;
 sub AUTOLOAD {
     my $command = $AUTOLOAD;
     $command =~ s/.*://;
-    my @command = split /_/, uc $command;
+    my @command = split /_/, $command;
 
     my $method = sub {
         my $self = shift;
