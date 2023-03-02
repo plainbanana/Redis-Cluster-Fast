@@ -137,20 +137,20 @@ The benchmark script used can be found under example directory.
     Redis::ClusterRider is 0.26
     ### mset ###
                             Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider  12821/s                   --                 -32%
-    Redis::Cluster::Fast 18762/s                  46%                   --
+    Redis::ClusterRider  13245/s                   --                 -34%
+    Redis::Cluster::Fast 20080/s                  52%                   --
     ### mget ###
                             Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider  14815/s                   --                 -41%
-    Redis::Cluster::Fast 24938/s                  68%                   --
+    Redis::ClusterRider  14641/s                   --                 -40%
+    Redis::Cluster::Fast 24510/s                  67%                   --
     ### incr ###
                             Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider  17830/s                   --                 -46%
-    Redis::Cluster::Fast 33051/s                  85%                   --
-    ### new ###
+    Redis::ClusterRider  18367/s                   --                 -44%
+    Redis::Cluster::Fast 32879/s                  79%                   --
+    ### new and ping ###
                            Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider   155/s                   --                 -96%
-    Redis::Cluster::Fast 3900/s                2415%                   --
+    Redis::ClusterRider   146/s                   --                 -96%
+    Redis::Cluster::Fast 3941/s                2598%                   --
 
 =head1 METHODS
 
