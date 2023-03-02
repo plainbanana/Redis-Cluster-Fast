@@ -80,24 +80,24 @@ Benchmark::cmpthese(-2, {
 is 1, 1;
 done_testing;
 __END__
-% perl ./examples/benchmark-simple.pl
-Redis::Fast is 0.082
+% AUTOMATED_TESTING=1 perl ./examples/benchmark-simple.pl
+Redis::Cluster::Fast is 0.084
 Redis::ClusterRider is 0.26
 ### mset ###
                         Rate  Redis::ClusterRider Redis::Cluster::Fast
-Redis::ClusterRider  13477/s                   --                 -26%
-Redis::Cluster::Fast 18182/s                  35%                   --
+Redis::ClusterRider  12821/s                   --                 -32%
+Redis::Cluster::Fast 18762/s                  46%                   --
 ### mget ###
                         Rate  Redis::ClusterRider Redis::Cluster::Fast
-Redis::ClusterRider  14347/s                   --                 -40%
-Redis::Cluster::Fast 23923/s                  67%                   --
+Redis::ClusterRider  14815/s                   --                 -41%
+Redis::Cluster::Fast 24938/s                  68%                   --
 ### incr ###
                         Rate  Redis::ClusterRider Redis::Cluster::Fast
-Redis::ClusterRider  16654/s                   --                 -51%
-Redis::Cluster::Fast 34037/s                 104%                   --
+Redis::ClusterRider  17830/s                   --                 -46%
+Redis::Cluster::Fast 33051/s                  85%                   --
 ### new ###
                        Rate  Redis::ClusterRider Redis::Cluster::Fast
-Redis::ClusterRider   157/s                   --                 -96%
-Redis::Cluster::Fast 3801/s                2328%                   --
+Redis::ClusterRider   155/s                   --                 -96%
+Redis::Cluster::Fast 3900/s                2415%                   --
 ok 1
 1..1
