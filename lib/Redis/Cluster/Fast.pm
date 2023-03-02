@@ -131,7 +131,7 @@ To build this module you need at least autoconf, automake, libtool, patch, pkg-c
 =head2 MICROBENCHMARK
 
 Simple microbenchmark comparing PP and XS.
-The benchmark script used can be found under example directory.
+The benchmark script used can be found under examples directory.
 
     Redis::Cluster::Fast is 0.084
     Redis::ClusterRider is 0.26
