@@ -1,20 +1,16 @@
 use strict;
 use warnings FATAL => 'all';
-
-use lib "./_build/lib";
-use lib "./blib/arch";
-use lib "./blib/lib";
-use lib "./t/lib";
-
+use lib './t/lib';
 use Benchmark;
 use Redis::Cluster::Fast;
 use Redis::ClusterRider;
 use Test::More; # for Test::RedisCluster
-use Test::RedisCluster qw/get_startup_nodes/;
-my $nodes = get_startup_nodes;
+use Test::Docker::RedisCluster qw/get_startup_nodes/;
 
 print "Redis::Cluster::Fast is " . $Redis::Cluster::Fast::VERSION . "\n";
 print "Redis::ClusterRider is " . $Redis::ClusterRider::VERSION . "\n";
+
+my $nodes = get_startup_nodes;
 
 my $xs = Redis::Cluster::Fast->new(
     startup_nodes => $nodes,
