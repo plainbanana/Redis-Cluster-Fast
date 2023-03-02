@@ -128,6 +128,30 @@ Require Redis 6 or higher to support L<RESP3|https://github.com/antirez/RESP3/bl
 
 To build this module you need at least autoconf, automake, libtool, patch, pkg-config are installed on your system.
 
+=head2 MICROBENCHMARK
+
+Simple microbenchmark comparing PP and XS.
+The benchmark script used can be found under example directory.
+
+    Redis::Cluster::Fast is 0.084
+    Redis::ClusterRider is 0.26
+    ### mset ###
+                            Rate  Redis::ClusterRider Redis::Cluster::Fast
+    Redis::ClusterRider  12821/s                   --                 -32%
+    Redis::Cluster::Fast 18762/s                  46%                   --
+    ### mget ###
+                            Rate  Redis::ClusterRider Redis::Cluster::Fast
+    Redis::ClusterRider  14815/s                   --                 -41%
+    Redis::Cluster::Fast 24938/s                  68%                   --
+    ### incr ###
+                            Rate  Redis::ClusterRider Redis::Cluster::Fast
+    Redis::ClusterRider  17830/s                   --                 -46%
+    Redis::Cluster::Fast 33051/s                  85%                   --
+    ### new ###
+                           Rate  Redis::ClusterRider Redis::Cluster::Fast
+    Redis::ClusterRider   155/s                   --                 -96%
+    Redis::Cluster::Fast 3900/s                2415%                   --
+
 =head1 METHODS
 
 =head2 new(%args)
