@@ -20,7 +20,7 @@ my $redis = Redis::Cluster::Fast->new(
     startup_nodes => get_startup_nodes,
     connect_timeout => 0.5,
     command_timeout => 0.5,
-    max_retry => 10,
+    max_retry_count => 10,
 );
 
 $redis->del('valgrind');

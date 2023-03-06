@@ -6,6 +6,12 @@ use Carp qw/croak confess/;
 
 our $VERSION = "0.084";
 
+use constant {
+    DEFAULT_COMMAND_TIMEOUT => 1.0,
+    DEFAULT_CONNECT_TIMEOUT => 1.0,
+    DEFAULT_MAX_RETRY_COUNT => 5,
+};
+
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
@@ -20,20 +26,17 @@ sub new {
         $self->__set_servers($servers);
     }
 
-    my $connect_timeout = $args{connect_timeout};
-    $connect_timeout = 10 unless $connect_timeout;
+    my $connect_timeout = $args{connect_timeout} // DEFAULT_CONNECT_TIMEOUT;
     $self->__set_connect_timeout($connect_timeout);
 
-    my $command_timeout = $args{command_timeout};
-    $command_timeout = 10 unless $command_timeout;
+    my $command_timeout = $args{command_timeout} // DEFAULT_COMMAND_TIMEOUT;
     $self->__set_command_timeout($command_timeout);
 
-    my $max_retry = $args{max_retry_count};
-    $max_retry = 10 unless $max_retry;
+    my $max_retry = $args{max_retry_count} // DEFAULT_MAX_RETRY_COUNT;
     $self->__set_max_retry($max_retry);
 
-    croak "failed to connect redis servers"
-        if $self->connect();
+    my $error = $self->__connect();
+    croak $error if $error;
     return $self;
 }
 
@@ -97,7 +100,7 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
         ],
         connect_timeout => 0.05,
         command_timeout => 0.05,
-        max_retry => 10,
+        max_retry_count => 10,
     );
 
     $redis->set('test', 123);
@@ -158,29 +161,30 @@ The benchmark script used can be found under examples directory.
 
 Following arguments are available.
 
-=over 4
-
-=item startup_nodes
+=head3 startup_nodes
 
 Specifies the list of Redis Cluster nodes.
 
-=item connect_timeout
+=head3 connect_timeout
 
-A fractional seconds. (default: 10)
+A fractional seconds. (default: 1.0)
 
 Connection timeout to connect to a Redis node.
 
-=item command_timeout
+=head3 command_timeout
 
-A fractional seconds. (default: 10)
+A fractional seconds. (default: 1.0)
 
-Redis Command execution timeout.
+Specifies the timeout value for each read/write event to execute a Redis Command.
 
-=item max_retry
+=head3 max_retry_count
 
-A integer value. (default: 10)
+A integer value. (default: 5)
 
-=back
+The client will retry calling the Redis Command only if it successfully get one of the following error responses.
+MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
+
+C<mas_retry_count> is the maximum number of retries and must be 1 or above.
 
 =head2 <command>(@args)
 
