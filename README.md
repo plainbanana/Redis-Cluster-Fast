@@ -106,7 +106,11 @@ MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
 ## &lt;command>(@args)
 
-To run Redis command with arguments.
+To run a Redis command with arguments.
+
+The command can also be expressed by concatenating the subcommands with underscores.
+
+    e.g. cluster_info
 
 # LICENSE
 

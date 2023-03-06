@@ -188,7 +188,11 @@ C<mas_retry_count> is the maximum number of retries and must be 1 or above.
 
 =head2 <command>(@args)
 
-To run Redis command with arguments.
+To run a Redis command with arguments.
+
+The command can also be expressed by concatenating the subcommands with underscores.
+
+    e.g. cluster_info
 
 =head1 LICENSE
 
