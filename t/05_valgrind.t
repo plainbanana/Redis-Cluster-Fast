@@ -47,4 +47,12 @@ if ($pid == 0) {
 $redis->get('valgrind');
 $redis->cluster_info;
 
+eval {
+    Redis::Cluster::Fast->new(
+        startup_nodes => [
+            'localhost:1111corrupted'
+        ],
+    );
+};
+
 done_testing;
