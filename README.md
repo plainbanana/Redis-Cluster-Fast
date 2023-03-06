@@ -79,25 +79,30 @@ The benchmark script used can be found under examples directory.
 
 Following arguments are available.
 
-- startup\_nodes
+### startup\_nodes
 
-    Specifies the list of Redis Cluster nodes.
+Specifies the list of Redis Cluster nodes.
 
-- connect\_timeout
+### connect\_timeout
 
-    A fractional seconds. (default: 10)
+A fractional seconds. (default: 1.0)
 
-    Connection timeout to connect to a Redis node.
+Connection timeout to connect to a Redis node.
 
-- command\_timeout
+### command\_timeout
 
-    A fractional seconds. (default: 10)
+A fractional seconds. (default: 1.0)
 
-    Redis Command execution timeout.
+Specifies the timeout value for each read/write event to execute a Redis Command.
 
-- max\_retry\_count
+### max\_retry\_count
 
-    A integer value. (default: 10)
+A integer value. (default: 5)
+
+The client will retry calling the Redis Command only if it successfully get one of the following error responses.
+MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
+
+`mas_retry_count` is the maximum number of retries and must be 1 or above.
 
 ## &lt;command>(@args)
 
