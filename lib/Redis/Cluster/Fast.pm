@@ -7,8 +7,8 @@ use Carp qw/croak confess/;
 our $VERSION = "0.084";
 
 use constant {
-    DEFAULT_COMMAND_TIMEOUT => 1,
-    DEFAULT_CONNECT_TIMEOUT => 1,
+    DEFAULT_COMMAND_TIMEOUT => 1.0,
+    DEFAULT_CONNECT_TIMEOUT => 1.0,
     DEFAULT_MAX_RETRY_COUNT => 5,
 };
 
