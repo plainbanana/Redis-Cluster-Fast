@@ -102,7 +102,7 @@ A integer value. (default: 5)
 The client will retry calling the Redis Command only if it successfully get one of the following error responses.
 MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
-`mas_retry_count` is the maximum number of retries and must be 1 or above.
+`max_retry_count` is the maximum number of retries and must be 1 or above.
 
 ## &lt;command>(@args)
 
