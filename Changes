@@ -2,6 +2,10 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+    - Add simple microbenchmark result.
+    - Fix error handling to connect.
+    - Update POD.
+
 0.084 2023-03-01T18:16:05Z
 
     - Better testing.
