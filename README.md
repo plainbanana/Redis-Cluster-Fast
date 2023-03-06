@@ -18,7 +18,7 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
         ],
         connect_timeout => 0.05,
         command_timeout => 0.05,
-        max_retry => 10,
+        max_retry_count => 10,
     );
 
     $redis->set('test', 123);
@@ -95,7 +95,7 @@ Following arguments are available.
 
     Redis Command execution timeout.
 
-- max\_retry
+- max\_retry\_count
 
     A integer value. (default: 10)
 
