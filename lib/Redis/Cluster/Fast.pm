@@ -26,13 +26,16 @@ sub new {
         $self->__set_servers($servers);
     }
 
-    my $connect_timeout = $args{connect_timeout} // DEFAULT_CONNECT_TIMEOUT;
+    my $connect_timeout = $args{connect_timeout};
+    $connect_timeout = DEFAULT_CONNECT_TIMEOUT unless defined $connect_timeout;
     $self->__set_connect_timeout($connect_timeout);
 
-    my $command_timeout = $args{command_timeout} // DEFAULT_COMMAND_TIMEOUT;
+    my $command_timeout = $args{command_timeout};
+    $command_timeout = DEFAULT_COMMAND_TIMEOUT unless defined $command_timeout;
     $self->__set_command_timeout($command_timeout);
 
-    my $max_retry = $args{max_retry_count} // DEFAULT_MAX_RETRY_COUNT;
+    my $max_retry = $args{max_retry_count};
+    $max_retry = DEFAULT_MAX_RETRY_COUNT unless defined $max_retry;
     $self->__set_max_retry($max_retry);
 
     my $error = $self->__connect();
