@@ -35,8 +35,8 @@ sub new {
     my $max_retry = $args{max_retry_count} // DEFAULT_MAX_RETRY_COUNT;
     $self->__set_max_retry($max_retry);
 
-    croak "failed to connect redis servers"
-        if $self->connect();
+    my $error = $self->__connect();
+    croak $error if $error;
     return $self;
 }
 
