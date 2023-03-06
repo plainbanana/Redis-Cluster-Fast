@@ -188,7 +188,9 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     }
 
     self->cluster_event_base = event_base_new();
-    redisClusterLibeventAttach(self->acc, self->cluster_event_base);
+    if (redisClusterLibeventAttach(self->acc, self->cluster_event_base) != REDIS_OK) {
+        return newSVpvf("%s", "failed to attach event base");
+    }
 
     DEBUG_MSG("%s", "done connect");
     return &PL_sv_undef;
