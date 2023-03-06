@@ -6,6 +6,12 @@ use Carp qw/croak confess/;
 
 our $VERSION = "0.084";
 
+use constant {
+    DEFAULT_COMMAND_TIMEOUT => 1,
+    DEFAULT_CONNECT_TIMEOUT => 1,
+    DEFAULT_MAX_RETRY_COUNT => 5,
+};
+
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
@@ -20,16 +26,13 @@ sub new {
         $self->__set_servers($servers);
     }
 
-    my $connect_timeout = $args{connect_timeout};
-    $connect_timeout = 10 unless $connect_timeout;
+    my $connect_timeout = $args{connect_timeout} // DEFAULT_CONNECT_TIMEOUT;
     $self->__set_connect_timeout($connect_timeout);
 
-    my $command_timeout = $args{command_timeout};
-    $command_timeout = 10 unless $command_timeout;
+    my $command_timeout = $args{command_timeout} // DEFAULT_COMMAND_TIMEOUT;
     $self->__set_command_timeout($command_timeout);
 
-    my $max_retry = $args{max_retry_count};
-    $max_retry = 10 unless $max_retry;
+    my $max_retry = $args{max_retry_count} // DEFAULT_MAX_RETRY_COUNT;
     $self->__set_max_retry($max_retry);
 
     croak "failed to connect redis servers"
