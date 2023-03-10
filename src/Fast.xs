@@ -214,15 +214,15 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         self->pid = current_pid;
     }
 
-    long long int len;
-    len = redisFormatCommandArgv(&cmd, argc, argv, argvlen);
+    int len;
+    len = (int) redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
         reply_t->error = newSVpvf("%s", "memory allocation error");
         goto end;
     }
 
-    int status = redisClusterAsyncFormattedCommand(self->acc, replyCallback, reply_t, cmd, (int) len);
+    int status = redisClusterAsyncFormattedCommand(self->acc, replyCallback, reply_t, cmd, len);
     if (status != REDIS_OK) {
         if (self->acc->err == REDIS_ERR_OTHER &&
             strcmp(self->acc->errstr, "No keys in command(must have keys for redis cluster mode)") == 0) {
@@ -233,7 +233,7 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
             cluster_node *node;
             node = get_node_by_random(aTHX_ self);
 
-            status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, (int) len);
+            status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, len);
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
                 reply_t->error = newSVpvf("%s", self->acc->errstr);
