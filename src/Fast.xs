@@ -154,14 +154,6 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     }
 
     reply_t->done = 1;
-    event_base_loopbreak(self->cluster_event_base);
-}
-
-void wait_for_event(Redis__Cluster__Fast self) {
-    DEBUG_EVENT_BASE();
-    int status = event_base_dispatch(self->cluster_event_base);
-    DEBUG_MSG("event loop done. status %d", status);
-    DEBUG_EVENT_BASE();
 }
 
 SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
@@ -254,9 +246,12 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         }
     }
 
-    while (1) {
-        wait_for_event(self);
-        if (reply_t->done) {
+    int event_error;
+    while (!reply_t->done) {
+        DEBUG_EVENT_BASE();
+        event_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
+        if (event_error != 0) {
+            reply_t->error = newSVpvf("%s %d", "event_base_loop failed", event_error);
             break;
         }
     }
