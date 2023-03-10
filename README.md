@@ -112,6 +112,8 @@ The command can also be expressed by concatenating the subcommands with undersco
 
     e.g. cluster_info
 
+It does not support (Sharded) Pub/Sub family of commands and should not be run.
+
 # LICENSE
 
 Copyright (C) plainbanana.
