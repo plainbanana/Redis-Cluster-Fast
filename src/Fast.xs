@@ -85,11 +85,12 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
         case REDIS_REPLY_MAP:
         case REDIS_REPLY_SET:
         case REDIS_REPLY_ATTR: {
-            HV *hv = newHV();
             size_t i;
+            char *key;
+            HV *hv = newHV();
+
             res.result = newRV_noinc((SV *) hv);
 
-            char *key;
             for (i = 0; i < reply->elements; i++) {
                 if (i % 2 == 0) {
                     key = reply->element[i]->str;
@@ -138,11 +139,14 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     dTHX;
 
     cmd_reply_context_t *reply_t;
+    Redis__Cluster__Fast self;
+    redisReply *reply;
+
     reply_t = (cmd_reply_context_t *) privdata;
-    Redis__Cluster__Fast self = (Redis__Cluster__Fast) reply_t->self;
+    self = (Redis__Cluster__Fast) reply_t->self;
     DEBUG_MSG("replycb %s", "start");
 
-    redisReply *reply = (redisReply *) r;
+    reply = (redisReply *) r;
     if (reply) {
         redis_cluster_fast_reply_t res;
         res = Redis__Cluster__Fast_decode_reply(aTHX_ self, reply);
@@ -195,15 +199,20 @@ cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
 
 void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
                                   cmd_reply_context_t *reply_t) {
+    char *cmd;
+    int len, status, event_loop_error;
+    pid_t current_pid;
+
     DEBUG_MSG("start: %s", *argv);
+
+    cmd = NULL;
+
     reply_t->done = 0;
     reply_t->self = (void *) self;
     reply_t->result = NULL;
     reply_t->error = NULL;
 
-    char *cmd = NULL;
-
-    pid_t current_pid = getpid();
+    current_pid = getpid();
     if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
         if (event_reinit(self->cluster_event_base) != 0) {
@@ -214,7 +223,6 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         self->pid = current_pid;
     }
 
-    int len;
     len = (int) redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
@@ -222,15 +230,16 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         goto end;
     }
 
-    int status = redisClusterAsyncFormattedCommand(self->acc, replyCallback, reply_t, cmd, len);
+    status = redisClusterAsyncFormattedCommand(self->acc, replyCallback, reply_t, cmd, len);
     if (status != REDIS_OK) {
         if (self->acc->err == REDIS_ERR_OTHER &&
             strcmp(self->acc->errstr, "No keys in command(must have keys for redis cluster mode)") == 0) {
+            cluster_node *node;
+
             DEBUG_MSG("not cluster command, fallback to CommandToNode: err=%d errstr=%s",
                       self->acc->err,
                       self->acc->errstr);
 
-            cluster_node *node;
             node = get_node_by_random(aTHX_ self);
 
             status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, len);
@@ -246,12 +255,11 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         }
     }
 
-    int event_error;
     while (!reply_t->done) {
         DEBUG_EVENT_BASE();
-        event_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
-        if (event_error != 0) {
-            reply_t->error = newSVpvf("%s %d", "event_base_loop failed", event_error);
+        event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
+        if (event_loop_error != 0) {
+            reply_t->error = newSVpvf("%s %d", "event_base_loop failed", event_loop_error);
             break;
         }
     }
@@ -299,19 +307,27 @@ CODE:
 
 void
 __set_connect_timeout(Redis::Cluster::Fast self, double double_sec)
+PREINIT:
+    int second, micro_second;
+    struct timeval timeout;
 CODE:
-    int second = (int) (double_sec);
-    int micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
-    struct timeval timeout = { second, micro_second };
+    second = (int) (double_sec);
+    micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
+    timeout.tv_sec = second;
+    timeout.tv_usec = micro_second;
     self->connect_timeout = timeout;
     DEBUG_MSG("connect timeout %d, %d", second, micro_second);
 
 void
 __set_command_timeout(Redis::Cluster::Fast self, double double_sec)
+PREINIT:
+    int second, micro_second;
+    struct timeval timeout;
 CODE:
-    int second = (int) (double_sec);
-    int micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
-    struct timeval timeout = { second, micro_second };
+    second = (int) (double_sec);
+    micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
+    timeout.tv_sec = second;
+    timeout.tv_usec = micro_second;
     self->command_timeout = timeout;
     DEBUG_MSG("command timeout %d, %d", second, micro_second);
 
