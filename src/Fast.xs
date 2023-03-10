@@ -292,7 +292,7 @@ CODE:
     }
 
     if (hostnames) {
-        Newx(self->hostnames, sizeof(char) * (strlen(hostnames) + 1), char);
+        Newx(self->hostnames, strlen(hostnames) + 1, char);
         my_strlcpy(self->hostnames, hostnames, strlen(hostnames) + 1);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
     }
