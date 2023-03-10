@@ -70,7 +70,7 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
         case REDIS_REPLY_DOUBLE:
         case REDIS_REPLY_STATUS:
         case REDIS_REPLY_STRING:
-        case REDIS_REPLY_VERB: /* TODO: parse vtype (e.g. `txt`, `md`) */
+        case REDIS_REPLY_VERB:
             res.result = newSVpvn(reply->str, reply->len);
             break;
 
