@@ -17,7 +17,6 @@ extern "C" {
 } /* extern "C" */
 #endif
 
-#define NEED_newSVpvn_flags
 #include "ppport.h"
 
 #define ONE_SECOND_TO_MICRO 1000000
@@ -70,7 +69,7 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
         case REDIS_REPLY_DOUBLE:
         case REDIS_REPLY_STATUS:
         case REDIS_REPLY_STRING:
-        case REDIS_REPLY_VERB: // TODO: parse vtype (e.g. `txt`, `md`)
+        case REDIS_REPLY_VERB: /* TODO: parse vtype (e.g. `txt`, `md`) */
             res.result = newSVpvn(reply->str, reply->len);
             break;
 
@@ -109,7 +108,7 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
             break;
         }
 
-        case REDIS_REPLY_PUSH: // TODO: push handler
+        case REDIS_REPLY_PUSH: /* TODO: push handler */
         case REDIS_REPLY_ARRAY: {
             AV *av = newAV();
             size_t i;
