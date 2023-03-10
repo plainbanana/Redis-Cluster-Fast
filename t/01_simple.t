@@ -51,4 +51,24 @@ eval {
 };
 like $@, qr/^failed to add nodes: server port is incorrect/;
 
+{
+    my $redis_2 = Redis::Cluster::Fast->new(
+        startup_nodes => get_startup_nodes,
+    );
+    $redis_2->ping;
+
+    my $pid = fork;
+    if ($pid == 0) {
+        # child
+        # Do nothing
+        # call event_reinit at DESTROY
+        exit 0;
+    } else {
+        # parent
+        # Do nothing
+        waitpid($pid, 0);
+    }
+    is $redis_2->ping('PONG'), 'PONG';
+}
+
 done_testing;

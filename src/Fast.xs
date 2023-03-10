@@ -368,13 +368,15 @@ void
 DESTROY(Redis::Cluster::Fast self)
 CODE:
     if (self->cluster_event_base) {
-        DEBUG_MSG("%s", "free event_base");
-        if (self->pid != getpid())
-            event_reinit(self->cluster_event_base);
-        redisClusterAsyncDisconnect(self->acc);
-        event_base_dispatch(self->cluster_event_base);
-        event_base_free(self->cluster_event_base);
-        self->cluster_event_base = NULL;
+        DEBUG_MSG("%s", "trying to free event_base");
+        if ((self->pid == getpid()) || (event_reinit(self->cluster_event_base) == 0)){
+            redisClusterAsyncDisconnect(self->acc);
+            event_base_dispatch(self->cluster_event_base);
+            event_base_free(self->cluster_event_base);
+            self->cluster_event_base = NULL;
+        } else {
+           warn("event_reinit failed. Skip disconnecting and freeing event_base on destruction");
+        }
     }
 
     redisClusterAsyncFree(self->acc);
