@@ -17,6 +17,7 @@ extern "C" {
 } /* extern "C" */
 #endif
 
+#define NEED_my_strlcpy
 #include "ppport.h"
 
 #define ONE_SECOND_TO_MICRO 1000000
@@ -297,7 +298,7 @@ CODE:
 
     if (hostnames) {
         Newx(self->hostnames, sizeof(char) * (strlen(hostnames) + 1), char);
-        strcpy(self->hostnames, hostnames);
+        my_strlcpy(self->hostnames, hostnames, strlen(hostnames) + 1);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
     }
 
