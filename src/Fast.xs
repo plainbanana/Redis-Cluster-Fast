@@ -375,7 +375,7 @@ CODE:
     if (self->cluster_event_base) {
         DEBUG_MSG("%s", "free event_base");
         redisClusterAsyncDisconnect(self->acc);
-        wait_for_event(self);
+        event_base_dispatch(self->cluster_event_base);
         event_base_free(self->cluster_event_base);
         self->cluster_event_base = NULL;
     }
