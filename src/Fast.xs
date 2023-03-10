@@ -261,9 +261,8 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
     }
 
 end:
-    if (cmd != NULL) {
+    if (cmd != NULL)
         hi_free(cmd);
-    }
 }
 
 MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
