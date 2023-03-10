@@ -63,7 +63,7 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
 
     switch (reply->type) {
         case REDIS_REPLY_ERROR:
-            res.error = sv_2mortal(newSVpvn(reply->str, reply->len));
+            res.error = newSVpvn(reply->str, reply->len);
             break;
 
         case REDIS_REPLY_BIGNUM:
@@ -71,12 +71,12 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
         case REDIS_REPLY_STATUS:
         case REDIS_REPLY_STRING:
         case REDIS_REPLY_VERB: // TODO: parse vtype (e.g. `txt`, `md`)
-            res.result = sv_2mortal(newSVpvn(reply->str, reply->len));
+            res.result = newSVpvn(reply->str, reply->len);
             break;
 
         case REDIS_REPLY_INTEGER:
         case REDIS_REPLY_BOOL:
-            res.result = sv_2mortal(newSViv(reply->integer));
+            res.result = newSViv(reply->integer);
             break;
         case REDIS_REPLY_NIL:
             res.result = &PL_sv_undef;
@@ -87,7 +87,7 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
         case REDIS_REPLY_ATTR: {
             HV *hv = newHV();
             size_t i;
-            res.result = sv_2mortal(newRV_noinc((SV *) hv));
+            res.result = newRV_noinc((SV *) hv);
 
             char *key;
             for (i = 0; i < reply->elements; i++) {
@@ -113,13 +113,13 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
         case REDIS_REPLY_ARRAY: {
             AV *av = newAV();
             size_t i;
-            res.result = sv_2mortal(newRV_noinc((SV *) av));
+            res.result = newRV_noinc((SV *) av);
 
             for (i = 0; i < reply->elements; i++) {
                 redis_cluster_fast_reply_t elem = {NULL, NULL};
                 elem = Redis__Cluster__Fast_decode_reply(aTHX_ self, reply->element[i]);
                 if (elem.result) {
-                    av_push(av, SvREFCNT_inc(elem.result));
+                    av_push(av, elem.result);
                 } else {
                     av_push(av, newSV(0));
                 }
@@ -150,7 +150,7 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
         reply_t->error = res.error;
     } else {
         DEBUG_MSG("error: err=%d errstr=%s", cc->err, cc->errstr);
-        reply_t->error = sv_2mortal(newSVpvf("%s", cc->errstr));
+        reply_t->error = newSVpvf("%s", cc->errstr);
     }
 
     reply_t->done = 1;
@@ -196,8 +196,8 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     return &PL_sv_undef;
 }
 
-cluster_node *get_node_by_random(Redis__Cluster__Fast self) {
-    uint32_t slot_num = rand() % REDIS_CLUSTER_SLOTS;
+cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
+    uint32_t slot_num = (uint32_t) (Drand01() * REDIS_CLUSTER_SLOTS);
     return self->acc->cc->table[slot_num];
 }
 
@@ -215,7 +215,7 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
     if (self->pid != current_pid) {
         DEBUG_MSG("%s", "pid changed");
         if (event_reinit(self->cluster_event_base) != 0) {
-            reply_t->error = sv_2mortal(newSVpvf("%s", "event reinit failed"));
+            reply_t->error = newSVpvf("%s", "event reinit failed");
             goto end;
         }
         redisClusterAsyncDisconnect(self->acc);
@@ -226,7 +226,7 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
     len = redisFormatCommandArgv(&cmd, argc, argv, argvlen);
     if (len == -1) {
         DEBUG_MSG("error: err=%s", "memory error");
-        reply_t->error = sv_2mortal(newSVpvf("%s", "memory allocation error"));
+        reply_t->error = newSVpvf("%s", "memory allocation error");
         goto end;
     }
 
@@ -239,17 +239,17 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
                       self->acc->errstr);
 
             cluster_node *node;
-            node = get_node_by_random(self);
+            node = get_node_by_random(aTHX_ self);
 
             status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, (int) len);
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
-                reply_t->error = sv_2mortal(newSVpvf("%s", self->acc->errstr));
+                reply_t->error = newSVpvf("%s", self->acc->errstr);
                 goto end;
             }
         } else {
             DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
-            reply_t->error = sv_2mortal(newSVpvf("%s", self->acc->errstr));
+            reply_t->error = newSVpvf("%s", self->acc->errstr);
             goto end;
         }
     }
@@ -269,39 +269,29 @@ end:
 
 MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
 
-BOOT:
-{
-    srand((unsigned int) time(NULL));
-}
-
 PROTOTYPES: DISABLE
 
-void
+Redis::Cluster::Fast
 _new(char* cls);
 PREINIT:
-redis_cluster_fast_t* self;
-PPCODE:
-{
+    redis_cluster_fast_t* self;
+CODE:
     Newxz(self, sizeof(redis_cluster_fast_t), redis_cluster_fast_t);
-    ST(0) = sv_newmortal();
-    sv_setref_pv(ST(0), cls, (void*)self);
-    XSRETURN(1);
-}
+    RETVAL = self;
+OUTPUT:
+    RETVAL
 
 int
 __set_debug(Redis::Cluster::Fast self, int val)
 CODE:
-{
     DEBUG_MSG("%s", "DEBUG true");
     RETVAL = self->debug = val;
-}
 OUTPUT:
     RETVAL
 
 void
 __set_servers(Redis::Cluster::Fast self, char* hostnames)
 CODE:
-{
     if (self->hostnames) {
         Safefree(self->hostnames);
         self->hostnames = NULL;
@@ -312,44 +302,35 @@ CODE:
         strcpy(self->hostnames, hostnames);
         DEBUG_MSG("%s %s", "set hostnames", self->hostnames);
     }
-}
 
 void
 __set_connect_timeout(Redis::Cluster::Fast self, double double_sec)
 CODE:
-{
     int second = (int) (double_sec);
     int micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
     struct timeval timeout = { second, micro_second };
     self->connect_timeout = timeout;
     DEBUG_MSG("connect timeout %d, %d", second, micro_second);
-}
 
 void
 __set_command_timeout(Redis::Cluster::Fast self, double double_sec)
 CODE:
-{
     int second = (int) (double_sec);
     int micro_second = (int) (fmod(double_sec * ONE_SECOND_TO_MICRO, ONE_SECOND_TO_MICRO) + 0.999);
     struct timeval timeout = { second, micro_second };
     self->command_timeout = timeout;
     DEBUG_MSG("command timeout %d, %d", second, micro_second);
-}
 
 void
 __set_max_retry(Redis::Cluster::Fast self, int max_retry)
 CODE:
-{
     self->max_retry = max_retry;
     DEBUG_MSG("max_retry %d", max_retry);
-}
 
 SV*
 __connect(Redis::Cluster::Fast self)
 CODE:
-{
     RETVAL = Redis__Cluster__Fast_connect(aTHX_ self);
-}
 OUTPUT:
     RETVAL
 
@@ -362,7 +343,6 @@ PREINIT:
     STRLEN len;
     int argc, i;
 PPCODE:
-{
     if (!self->acc) {
        croak("Not connected to any server");
     }
@@ -380,21 +360,19 @@ PPCODE:
     Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
 
     ST(0) = result_context->result ?
-            result_context->result : &PL_sv_undef;
+            sv_2mortal(result_context->result) : &PL_sv_undef;
     ST(1) = result_context->error ?
-            result_context->error : &PL_sv_undef ;
+            sv_2mortal(result_context->error) : &PL_sv_undef;
 
     Safefree(argv);
     Safefree(argvlen);
     Safefree(result_context);
 
     XSRETURN(2);
-}
 
 void
 DESTROY(Redis::Cluster::Fast self)
 CODE:
-{
     if (self->cluster_event_base) {
         DEBUG_MSG("%s", "free event_base");
         redisClusterAsyncDisconnect(self->acc);
@@ -414,4 +392,3 @@ CODE:
 
     DEBUG_MSG("%s", "done");
     Safefree(self);
-}
