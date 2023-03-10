@@ -110,7 +110,7 @@ Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *r
             break;
         }
 
-        case REDIS_REPLY_PUSH: /* TODO: push handler */
+        case REDIS_REPLY_PUSH:
         case REDIS_REPLY_ARRAY: {
             AV *av = newAV();
             size_t i;
