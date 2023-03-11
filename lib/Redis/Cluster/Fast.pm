@@ -2,7 +2,7 @@ package Redis::Cluster::Fast;
 use 5.008001;
 use strict;
 use warnings;
-use Carp qw/croak confess/;
+use Carp 'croak';
 
 our $VERSION = "0.086";
 
@@ -56,11 +56,11 @@ sub AUTOLOAD {
         my @arguments = @_;
         for my $index (0 .. $#arguments) {
             utf8::downgrade($arguments[$index], 1)
-                or confess 'command sent is not an octet sequence in the native encoding (Latin-1).';
+                or croak 'command sent is not an octet sequence in the native encoding (Latin-1).';
         }
 
         my ($reply, $error) = $self->__std_cmd(@command, @arguments);
-        confess "[$command] $error" if defined $error;
+        croak "[$command] $error" if defined $error;
         if (wantarray) {
             my $type = ref $reply;
             if ($type eq 'ARRAY') {
