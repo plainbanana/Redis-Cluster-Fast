@@ -20,7 +20,6 @@ sub _build_dependencies {
     # Skip if already built
     return if -e "$abs/build";
 
-    check_bin('patch');
     # libevent
     check_bin('autoconf');
     check_bin('automake');
@@ -41,7 +40,6 @@ sub _build_dependencies {
     if (is_debug) {
         $self->do_system('git', 'submodule', 'update', '--init');
     }
-    $self->do_system('patch -N -p1 < deps/async_context_always_use_resp3.patch');
 
     # libevent
     {
