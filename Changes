@@ -2,6 +2,10 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+    - Fix Bugs.
+    - Use RESP2 instead of RESP3 for deps maintainability. Therefore, the response type of some commands has been changed.
+    - Refactorings.
+
 0.086 2023-03-06T18:50:52Z
 
     - Fix typo in POD.
