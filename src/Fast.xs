@@ -201,8 +201,9 @@ cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
     initNodeIterator(&ni, self->acc->cc);
 
     /* Select a random node by reservoir sampling. */
-    selected = nodeNext(&ni);
     node_count = 1;
+    if ((selected = nodeNext(&ni)) == NULL)
+        return NULL;
     while ((candidate = nodeNext(&ni)) != NULL) {
         node_count++;
         if ((int) (Drand01() * node_count) == 0)
@@ -255,6 +256,10 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
                       self->acc->errstr);
 
             node = get_node_by_random(aTHX_ self);
+            if (node == NULL) {
+                reply_t->error = newSVpvf("%s", "No node found");
+                goto end;
+            }
 
             status = redisClusterAsyncFormattedCommandToNode(self->acc, node, replyCallback, reply_t, cmd, len);
             if (status != REDIS_OK) {
