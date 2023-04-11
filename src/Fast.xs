@@ -193,8 +193,22 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
 }
 
 cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
-    uint32_t slot_num = (uint32_t) (Drand01() * REDIS_CLUSTER_SLOTS);
-    return self->acc->cc->table[slot_num];
+    cluster_node *selected;
+    cluster_node *candidate;
+    int node_count;
+    nodeIterator ni;
+
+    initNodeIterator(&ni, self->acc->cc);
+
+    /* Select a random node by reservoir sampling. */
+    selected = nodeNext(&ni);
+    node_count = 1;
+    while ((candidate = nodeNext(&ni)) != NULL) {
+        node_count++;
+        if ((int) (Drand01() * node_count) == 0)
+            selected = candidate;
+    }
+    return selected;
 }
 
 void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
