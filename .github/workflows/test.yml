@@ -1,5 +1,5 @@
 name: test
-on: [push, pull_request]
+on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,7 +41,7 @@ jobs:
       - name: Init submodules
         run: git submodule update --init
       - name: Run test
-        run: minil test --noauthor --automated
+        run: minil test --author
         env:
           TEST_REDIS_CLUSTER_STARTUP_NODES: localhost:9000,localhost:9001,localhost:9002,localhost:9003,localhost:9004,localhost:9005
 

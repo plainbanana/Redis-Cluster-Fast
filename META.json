@@ -30,7 +30,6 @@
       "configure" : {
          "requires" : {
             "Devel::CheckBin" : "0",
-            "File::Spec" : "0",
             "File::Which" : "0",
             "File::chdir" : "0",
             "Module::Build" : "0.4005",
@@ -39,11 +38,17 @@
       },
       "develop" : {
          "requires" : {
+            "IO::CaptureOutput" : "0",
+            "Scope::Guard" : "0",
+            "Sub::Retry" : "0",
             "Test::CPAN::Meta" : "0",
+            "Test::LeakTrace" : "0",
             "Test::MinimumVersion::Fast" : "0.04",
             "Test::PAUSE::Permissions" : "0.07",
             "Test::Pod" : "1.41",
-            "Test::Spellunker" : "v0.2.7"
+            "Test::SharedFork" : "0",
+            "Test::Spellunker" : "v0.2.7",
+            "Test::Valgrind" : "0"
          }
       },
       "runtime" : {
@@ -53,13 +58,7 @@
       },
       "test" : {
          "requires" : {
-            "IO::CaptureOutput" : "0",
-            "Scope::Guard" : "0",
-            "Sub::Retry" : "0",
-            "Test::LeakTrace" : "0",
-            "Test::More" : "0.98",
-            "Test::SharedFork" : "0",
-            "Test::Valgrind" : "0"
+            "Test::More" : "0.98"
          }
       }
    },
