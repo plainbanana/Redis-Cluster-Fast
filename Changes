@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+0.088 2023-04-19T17:56:38Z
+
     - Fix for future maintainability.
     - Adjust cpanfile.
 
