@@ -64,7 +64,7 @@ sub _start_redis_cluster {
     retry(2, 0,
         sub {
             ($container_id, $stderr, $exit_code) = _capture_exec(
-                qw/docker run -e BIND_ADDRESS=0.0.0.0 -d -t/,
+                qw/docker run -e IP=127.0.0.1 -d -t/,
                 '--name', TEST_DOCKER_CONTAINER_NAME,
                 '-e', $initial_port,
                 @ports,
@@ -96,7 +96,7 @@ sub get_startup_nodes {
         return [ split(/,/, $nodes) ];
     } else {
         my $ports = REDIS_CLUSTER_PORTS;
-        return [ map { "localhost:$_" } @$ports ];
+        return [ map { "127.0.0.1:$_" } @$ports ];
     }
 }
 
