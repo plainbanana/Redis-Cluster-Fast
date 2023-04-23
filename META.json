@@ -75,6 +75,9 @@
       }
    },
    "version" : "0.088",
+   "x_contributors" : [
+      "Masahiro Honma <hiratara@cpan.org>"
+   ],
    "x_serialization_backend" : "JSON::PP version 4.06",
    "x_static_install" : 0
 }
