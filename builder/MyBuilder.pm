@@ -20,12 +20,6 @@ sub _build_dependencies {
     # Skip if already built
     return if -e "$abs/build";
 
-    # libevent
-    check_bin('autoconf');
-    check_bin('automake');
-    check_bin('libtoolize');
-    check_bin('pkg-config');
-
     my $make;
     if ($^O =~ m/(bsd|dragonfly)$/ && $^O !~ m/gnukfreebsd$/) {
         my $gmake = which('gmake');
@@ -39,22 +33,6 @@ sub _build_dependencies {
     }
     if (is_debug) {
         $self->do_system('git', 'submodule', 'update', '--init');
-    }
-
-    # libevent
-    {
-        local $CWD = "deps/libevent";
-        $self->do_system('./autogen.sh');
-        $self->do_system('./configure',
-            '--disable-openssl',
-            '--disable-samples',
-            '--disable-shared',
-            '--with-pic',
-            '--prefix',
-            "$abs/build/usr/local",
-        );
-        $self->do_system($make);
-        $self->do_system($make, 'install');
     }
 
     # hiredis
@@ -83,7 +61,7 @@ sub new {
             'deps/build/usr/local/include',
         ],
         extra_linker_flags => [
-            "deps/build/usr/local/lib/libevent$Config{lib_ext}",
+            "-levent",
             "deps/build/usr/local/lib/libhiredis$Config{lib_ext}",
             "deps/build/usr/local/lib/libhiredis_cluster$Config{lib_ext}",
         ],
