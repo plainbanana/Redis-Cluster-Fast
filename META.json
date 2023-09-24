@@ -29,7 +29,6 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Devel::CheckBin" : "0",
             "File::Which" : "0",
             "File::chdir" : "0",
             "Module::Build" : "0.4005",
