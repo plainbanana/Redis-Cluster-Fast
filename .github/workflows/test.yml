@@ -33,7 +33,7 @@ jobs:
         with:
           perl-version: ${{ matrix.perl }}
       - name: Install Valgrind
-        run: sudo apt-get install -y valgrind
+        run: sudo apt-get install -y valgrind libevent-dev
       - name: Install Minilla
         run: cpanm -n --with-recommends Minilla
       - name: Install dependencies
