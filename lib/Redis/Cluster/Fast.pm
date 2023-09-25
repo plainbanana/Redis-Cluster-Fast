@@ -21,7 +21,7 @@ sub new {
 
     $self->__set_debug($args{debug} ? 1 : 0);
 
-    croak 'need startup_nodes' unless defined $args{startup_nodes};
+    croak 'need startup_nodes' unless defined $args{startup_nodes} && @{$args{startup_nodes}};
     if (my $servers = join(',', @{$args{startup_nodes}})) {
         $self->__set_servers($servers);
     }
