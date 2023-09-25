@@ -1,6 +1,6 @@
 use strict;
 use warnings FATAL => 'all';
-use lib './t/lib';
+use lib './xt/lib';
 
 BEGIN {
     use Test::More;
@@ -9,7 +9,7 @@ BEGIN {
 };
 
 eval {
-    use Test::Valgrind (extra_supps => [ './t/lib/memcheck-extra.supp' ]);
+    use Test::Valgrind (extra_supps => [ './xt/lib/memcheck-extra.supp' ]);
 };
 plan skip_all => 'Test::Valgrind is required to test your distribution with valgrind' if $@;
 

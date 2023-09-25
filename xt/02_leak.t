@@ -1,7 +1,7 @@
 use strict;
 use warnings FATAL => 'all';
 use Test::More;
-use lib './t/lib';
+use lib './xt/lib';
 use Test::Docker::RedisCluster qw/get_startup_nodes/;
 
 use Redis::Cluster::Fast;
