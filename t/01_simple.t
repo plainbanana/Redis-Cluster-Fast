@@ -75,4 +75,15 @@ like $@, qr/^failed to add nodes: server port is incorrect/;
     is $redis_2->ping('PONG'), 'PONG';
 }
 
+for my $case (
+    [ undef, '^need startup_nodes' ],
+    [ [], '^need startup_nodes' ],
+    [ 'foo', '^Can\'t use string \("foo"\) as an ARRAY ref' ],
+) {
+    eval {
+        Redis::Cluster::Fast->new(startup_nodes => $case->[0]);
+    };
+    like $@, qr/$case->[1]/, 'startup_nodes validation';
+}
+
 done_testing;
