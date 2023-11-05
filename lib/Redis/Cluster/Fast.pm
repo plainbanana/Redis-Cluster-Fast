@@ -10,6 +10,7 @@ use constant {
     DEFAULT_COMMAND_TIMEOUT => 1.0,
     DEFAULT_CONNECT_TIMEOUT => 1.0,
     DEFAULT_MAX_RETRY_COUNT => 5,
+    DEBUG_REDIS_CLUSTER_FAST => $ENV{DEBUG_PERL_REDIS_CLUSTER_FAST} ? 1 : 0,
 };
 
 use XSLoader;
@@ -19,7 +20,7 @@ sub new {
     my ($class, %args) = @_;
     my $self = $class->_new;
 
-    $self->__set_debug($args{debug} ? 1 : 0);
+    $self->__set_debug(DEBUG_REDIS_CLUSTER_FAST);
 
     croak 'need startup_nodes' unless defined $args{startup_nodes} && @{$args{startup_nodes}};
     if (my $servers = join(',', @{$args{startup_nodes}})) {
