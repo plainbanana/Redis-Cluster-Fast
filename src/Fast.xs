@@ -234,6 +234,12 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         }
         redisClusterAsyncDisconnect(self->acc);
         self->pid = current_pid;
+
+        if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
+            DEBUG_MSG("%s", "failed to connect after forking");
+            reply_t->error = self->acc->cc->errstr;
+            return;
+        }
     }
 
     status = redisClusterAsyncCommandArgv(self->acc, replyCallback, reply_t, argc, argv, argvlen);
