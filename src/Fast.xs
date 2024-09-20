@@ -238,12 +238,13 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
             reply_t->error = newSVpvf("failed to re-connect: %s", self->acc->cc->errstr);
             return;
         }
-        self->pid = current_pid;
 
         if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
             reply_t->error = newSVpvf("failed to re-connect: %s", self->acc->cc->errstr);
             return;
         }
+
+        self->pid = current_pid;
     }
 
     status = redisClusterAsyncCommandArgv(self->acc, replyCallback, reply_t, argc, argv, argvlen);
