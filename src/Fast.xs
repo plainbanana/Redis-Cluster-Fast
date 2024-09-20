@@ -238,7 +238,7 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
 
         if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
             DEBUG_MSG("%s", "failed to connect after forking");
-            reply_t->error = self->acc->cc->errstr;
+            reply_t->error = newSVpvf("failed to re-connect: %s", self->acc->cc->errstr);
             return;
         }
     }
