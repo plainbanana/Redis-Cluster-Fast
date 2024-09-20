@@ -233,6 +233,7 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
             return;
         }
         redisClusterAsyncDisconnect(self->acc);
+        event_base_dispatch(self->cluster_event_base);
         self->pid = current_pid;
 
         if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
