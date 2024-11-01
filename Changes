@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+0.092 2024-11-01T07:17:15Z
+
     - Bump hiredis-cluster to 0.14.0
     - Add route_use_slots option.
     - Some chores for CI.
