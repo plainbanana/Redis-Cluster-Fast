@@ -216,7 +216,7 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     }
 
     DEBUG_MSG("%s", "done connect");
-    return &PL_sv_undef;
+    return NULL;
 }
 
 SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self) {
@@ -241,7 +241,7 @@ SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self)
         count++;
     }
     DEBUG_MSG("%s", "done wait_until_event_ready");
-    return &PL_sv_undef;
+    return NULL;
 }
 
 cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
@@ -264,39 +264,26 @@ cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
     return selected;
 }
 
-void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
-                                  cmd_reply_context_t *reply_t) {
-    int status, event_loop_error;
-    pid_t current_pid;
-
-    DEBUG_MSG("start: %s", *argv);
-
-    reply_t->done = 0;
-    reply_t->self = (void *) self;
-    reply_t->result = NULL;
-    reply_t->error = NULL;
-
-    current_pid = getpid();
-    if (self->pid != current_pid) {
-        DEBUG_MSG("%s", "pid changed");
-        if (event_reinit(self->cluster_event_base) != 0) {
-            reply_t->error = newSVpvf("%s", "event reinit failed");
-            return;
-        }
-        redisClusterAsyncDisconnect(self->acc);
-
-        if (event_base_dispatch(self->cluster_event_base) == -1) {
-            reply_t->error = newSVpvf("%s", "event_base_dispatch failed after forking");
-            return;
-        }
-
-        if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
-            reply_t->error = newSVpvf("failed to re-connect: %s", self->acc->cc->errstr);
-            return;
-        }
-
-        self->pid = current_pid;
+void disconnect(pTHX_ Redis__Cluster__Fast self, cmd_reply_context_t *reply_t) {
+    if (event_reinit(self->cluster_event_base) != 0) {
+        reply_t->error = newSVpvf("%s", "event reinit failed");
+        return;
     }
+    redisClusterAsyncDisconnect(self->acc);
+
+    if (event_base_dispatch(self->cluster_event_base) == -1) {
+        reply_t->error = newSVpvf("%s", "event_base_dispatch failed after forking");
+        return;
+    }
+
+    redisClusterAsyncFree(self->acc);
+    self->acc = NULL;
+}
+
+void run_cmd_impl(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
+                  cmd_reply_context_t *reply_t) {
+    int status, event_loop_error;
+    DEBUG_MSG("start: %s", *argv);
 
     status = redisClusterAsyncCommandArgv(self->acc, replyCallback, reply_t, argc, argv, argvlen);
     if (status != REDIS_OK) {
@@ -335,6 +322,34 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
             break;
         }
     }
+}
+
+void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
+                                  cmd_reply_context_t *reply_t) {
+    reply_t->self = (void *) self;
+    reply_t->result = NULL;
+    reply_t->error = NULL;
+    reply_t->done = 0;
+
+    if (self->pid != getpid()) {
+        DEBUG_MSG("%s", "pid changed");
+        disconnect(aTHX_ self, reply_t);
+        if (reply_t->error) {
+            return;
+        }
+
+        reply_t->error = Redis__Cluster__Fast_connect(aTHX_ self);
+        if (reply_t->error) {
+            return;
+        }
+
+        reply_t->error = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self);
+        if (reply_t->error) {
+            return;
+        }
+    }
+
+    run_cmd_impl(aTHX_ self, argc, argv, argvlen, reply_t);
 }
 
 MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
@@ -420,6 +435,9 @@ SV*
 __connect(Redis::Cluster::Fast self)
 CODE:
     RETVAL = Redis__Cluster__Fast_connect(aTHX_ self);
+    if (RETVAL == NULL) {
+        RETVAL = &PL_sv_undef;
+    }
 OUTPUT:
     RETVAL
 
@@ -427,6 +445,9 @@ SV*
 __wait_until_event_ready(Redis::Cluster::Fast self)
 CODE:
     RETVAL = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self);
+    if (RETVAL == NULL) {
+        RETVAL = &PL_sv_undef;
+    }
 OUTPUT:
     RETVAL
 
