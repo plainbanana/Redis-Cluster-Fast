@@ -7,6 +7,8 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
 
     use Redis::Cluster::Fast;
 
+    Redis::Cluster::Fast::srandom(100);
+
     my $redis = Redis::Cluster::Fast->new(
         startup_nodes => [
             'localhost:9000',
@@ -77,6 +79,13 @@ The benchmark script used can be found under examples directory.
     Redis::Cluster::Fast 3941/s                2598%                   --
 
 # METHODS
+
+## srandom($seed)
+
+hiredis-cluster uses [random()](https://linux.die.net/man/3/random) to select a node used for requesting cluster topology.
+
+`$seed` is expected to be an unsigned integer value,
+and is used as an argument for [srandom()](https://linux.die.net/man/3/srandom).
 
 ## new(%args)
 

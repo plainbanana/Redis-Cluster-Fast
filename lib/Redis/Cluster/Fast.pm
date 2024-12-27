@@ -17,6 +17,11 @@ use constant {
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
 
+sub srandom {
+    my $seed = shift;
+    __PACKAGE__->__srandom($seed);
+}
+
 sub new {
     my ($class, %args) = @_;
     my $self = $class->_new;
@@ -103,6 +108,8 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
 
     use Redis::Cluster::Fast;
 
+    Redis::Cluster::Fast::srandom(100);
+
     my $redis = Redis::Cluster::Fast->new(
         startup_nodes => [
             'localhost:9000',
@@ -173,6 +180,13 @@ The benchmark script used can be found under examples directory.
     Redis::Cluster::Fast 3941/s                2598%                   --
 
 =head1 METHODS
+
+=head2 srandom($seed)
+
+hiredis-cluster uses L<random()|https://linux.die.net/man/3/random> to select a node used for requesting cluster topology.
+
+C<$seed> is expected to be an unsigned integer value,
+and is used as an argument for L<srandom()|https://linux.die.net/man/3/srandom>.
 
 =head2 new(%args)
 

@@ -368,6 +368,11 @@ CODE:
 OUTPUT:
     RETVAL
 
+void
+__srandom(char *cls, unsigned int seed)
+CODE:
+    srandom(seed);
+
 int
 __set_debug(Redis::Cluster::Fast self, int val)
 CODE:
