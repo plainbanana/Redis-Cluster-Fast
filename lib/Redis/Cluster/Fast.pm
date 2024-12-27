@@ -36,6 +36,10 @@ sub new {
     $command_timeout = DEFAULT_COMMAND_TIMEOUT unless defined $command_timeout;
     $self->__set_command_timeout($command_timeout);
 
+    my $discovery_timeout = $args{cluster_discovery_retry_timeout};
+    $discovery_timeout = DEFAULT_CLUSTER_DISCOVERY_RETRY_TIMEOUT unless defined $discovery_timeout;
+    $self->__set_cluster_discovery_retry_timeout($discovery_timeout);
+
     my $max_retry = $args{max_retry_count};
     $max_retry = DEFAULT_MAX_RETRY_COUNT unless defined $max_retry;
     $self->__set_max_retry($max_retry);
@@ -45,9 +49,7 @@ sub new {
     my $error = $self->__connect();
     croak $error if $error;
 
-    my $discovery_timeout = $args{cluster_discovery_retry_timeout};
-    $discovery_timeout = DEFAULT_CLUSTER_DISCOVERY_RETRY_TIMEOUT unless defined $discovery_timeout;
-    $error = $self->__wait_until_event_ready($discovery_timeout);
+    $error = $self->__wait_until_event_ready();
     croak $error if $error;
     return $self;
 }

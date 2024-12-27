@@ -60,6 +60,7 @@ typedef struct redis_cluster_fast_s {
     int event_ready;
     struct timeval connect_timeout;
     struct timeval command_timeout;
+    int64_t discovery_timeout_usec;
     pid_t pid;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
 
@@ -218,12 +219,12 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     return &PL_sv_undef;
 }
 
-SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self, double timeout_sec) {
+SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self) {
     int event_loop_error;
     int count = 0;
-    int64_t timeout_after = hi_usec_now() + (int64_t) (timeout_sec * ONE_SECOND_TO_MICRO);
+    int64_t timeout_after = hi_usec_now() + self->discovery_timeout_usec;
 
-    DEBUG_MSG("%s %ld", "start wait_until_event_ready timeout:", (int64_t) (timeout_sec * ONE_SECOND_TO_MICRO));
+    DEBUG_MSG("%s", "start wait_until_event_ready");
     while (!self->event_ready) {
         DEBUG_EVENT_BASE();
         if (count >= MIN_ATTEMPT_TO_GET_RESULT && hi_usec_now() > timeout_after) {
@@ -409,6 +410,12 @@ __set_route_use_slots(Redis::Cluster::Fast self, int use_slot)
 CODE:
     self->use_cluster_slots = use_slot;
 
+void
+__set_cluster_discovery_retry_timeout(Redis::Cluster::Fast self, double double_sec)
+CODE:
+    self->discovery_timeout_usec = (int64_t) (double_sec * ONE_SECOND_TO_MICRO);
+    DEBUG_MSG("discovery timeout %ld", self->discovery_timeout_usec);
+
 SV*
 __connect(Redis::Cluster::Fast self)
 CODE:
@@ -417,9 +424,9 @@ OUTPUT:
     RETVAL
 
 SV*
-__wait_until_event_ready(Redis::Cluster::Fast self, double timeout_sec)
+__wait_until_event_ready(Redis::Cluster::Fast self)
 CODE:
-    RETVAL = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self, timeout_sec);
+    RETVAL = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self);
 OUTPUT:
     RETVAL
 
