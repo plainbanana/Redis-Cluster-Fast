@@ -494,7 +494,9 @@ CODE:
         DEBUG_MSG("%s", "trying to free event_base");
         if ((self->pid == getpid()) || (event_reinit(self->cluster_event_base) == 0)){
             redisClusterAsyncDisconnect(self->acc);
-            event_base_dispatch(self->cluster_event_base);
+            if (event_base_dispatch(self->cluster_event_base) == -1) {
+                warn("event_base_dispatch failed.");
+            }
             event_base_free(self->cluster_event_base);
             self->cluster_event_base = NULL;
         } else {
