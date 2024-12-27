@@ -275,6 +275,8 @@ void disconnect(pTHX_ Redis__Cluster__Fast self, cmd_reply_context_t *reply_t) {
         reply_t->error = newSVpvf("%s", "event_base_dispatch failed after forking");
         return;
     }
+    event_base_free(self->cluster_event_base);
+    self->cluster_event_base = NULL;
 
     redisClusterAsyncFree(self->acc);
     self->acc = NULL;
