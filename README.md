@@ -114,6 +114,8 @@ A integer value. (default: 5)
 The client will retry calling the Redis Command only if it successfully get one of the following error responses.
 MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
+`max_retry_count` is the maximum number of retries and must be 1 or above.
+
 ### cluster\_discovery\_retry\_timeout
 
 A fractional value. (default: 1.0)
