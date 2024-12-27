@@ -9,6 +9,7 @@ our $VERSION = "0.092";
 use constant {
     DEFAULT_COMMAND_TIMEOUT => 1.0,
     DEFAULT_CONNECT_TIMEOUT => 1.0,
+    DEFAULT_CLUSTER_DISCOVERY_RETRY_TIMEOUT => 1.0,
     DEFAULT_MAX_RETRY_COUNT => 5,
     DEBUG_REDIS_CLUSTER_FAST => $ENV{DEBUG_PERL_REDIS_CLUSTER_FAST} ? 1 : 0,
 };
@@ -42,6 +43,11 @@ sub new {
     $self->__set_route_use_slots($args{route_use_slots} ? 1 : 0);
 
     my $error = $self->__connect();
+    croak $error if $error;
+
+    my $discovery_timeout = $args{cluster_discovery_retry_timeout};
+    $discovery_timeout = DEFAULT_CLUSTER_DISCOVERY_RETRY_TIMEOUT unless defined $discovery_timeout;
+    $error = $self->__wait_until_event_ready($discovery_timeout);
     croak $error if $error;
     return $self;
 }
@@ -193,7 +199,11 @@ A integer value. (default: 5)
 The client will retry calling the Redis Command only if it successfully get one of the following error responses.
 MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
-C<max_retry_count> is the maximum number of retries and must be 1 or above.
+=head3 cluster_discovery_retry_timeout
+
+A fractional value. (default: 1.0)
+
+Specify the timeout value in seconds for retries when retrieves the cluster topology.
 
 =head3 route_use_slots
 
