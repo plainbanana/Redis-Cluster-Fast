@@ -219,6 +219,23 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     return NULL;
 }
 
+SV *Redis__Cluster__Fast_disconnect(pTHX_ Redis__Cluster__Fast self) {
+    if (event_reinit(self->cluster_event_base) != 0) {
+        return newSVpvf("%s", "event reinit failed");
+    }
+    redisClusterAsyncDisconnect(self->acc);
+
+    if (event_base_dispatch(self->cluster_event_base) == -1) {
+        return newSVpvf("%s", "event_base_dispatch failed after forking");
+    }
+    event_base_free(self->cluster_event_base);
+    self->cluster_event_base = NULL;
+
+    redisClusterAsyncFree(self->acc);
+    self->acc = NULL;
+    return NULL;
+}
+
 SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self) {
     int event_loop_error;
     int count = 0;
@@ -262,24 +279,6 @@ cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
             selected = candidate;
     }
     return selected;
-}
-
-void disconnect(pTHX_ Redis__Cluster__Fast self, cmd_reply_context_t *reply_t) {
-    if (event_reinit(self->cluster_event_base) != 0) {
-        reply_t->error = newSVpvf("%s", "event reinit failed");
-        return;
-    }
-    redisClusterAsyncDisconnect(self->acc);
-
-    if (event_base_dispatch(self->cluster_event_base) == -1) {
-        reply_t->error = newSVpvf("%s", "event_base_dispatch failed after forking");
-        return;
-    }
-    event_base_free(self->cluster_event_base);
-    self->cluster_event_base = NULL;
-
-    redisClusterAsyncFree(self->acc);
-    self->acc = NULL;
 }
 
 void run_cmd_impl(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
@@ -335,7 +334,7 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
 
     if (self->pid != getpid()) {
         DEBUG_MSG("%s", "pid changed");
-        disconnect(aTHX_ self, reply_t);
+        reply_t->error = Redis__Cluster__Fast_disconnect(aTHX_ self);
         if (reply_t->error) {
             return;
         }
