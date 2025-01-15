@@ -120,7 +120,8 @@ MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
 A fractional value. (default: 1.0)
 
-Specify the timeout value in seconds for retries when retrieves the cluster topology.
+Specify the number of seconds to treat a series of cluster topology requests as timed out without retrying the operation.
+At least one operation will be attempted, and the time taken for the initial operation will also be measured.
 
 ### route\_use\_slots
 
