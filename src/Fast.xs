@@ -12,6 +12,7 @@ extern "C" {
 #include <string.h>
 #include "hiredis_cluster/adapters/libevent.h"
 #include "hiredis_cluster/hircluster.h"
+#include "hiredis_cluster/hiutil.h"
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -22,6 +23,8 @@ extern "C" {
 #include "ppport.h"
 
 #define ONE_SECOND_TO_MICRO 1000000
+
+#define MIN_ATTEMPT_TO_GET_RESULT 2
 
 #define DEBUG_MSG(fmt, ...) \
     if (self->debug) {                                                  \
@@ -54,8 +57,10 @@ typedef struct redis_cluster_fast_s {
     int debug;
     int max_retry;
     int use_cluster_slots;
+    int event_ready;
     struct timeval connect_timeout;
     struct timeval command_timeout;
+    int64_t discovery_timeout_usec;
     pid_t pid;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
 
@@ -162,6 +167,14 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     reply_t->done = 1;
 }
 
+void eventCallback(const redisClusterContext *cc, int event, void *privdata) {
+    Redis__Cluster__Fast self = (Redis__Cluster__Fast) privdata;
+    DEBUG_MSG("event: %d", event);
+    if (event == HIRCLUSTER_EVENT_READY) {
+        self->event_ready = 1;
+    }
+}
+
 SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     DEBUG_MSG("%s", "start connect");
 
@@ -188,17 +201,64 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
         }
     }
 
-    if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
-        return newSVpvf("failed to connect: %s", self->acc->cc->errstr);
-    }
-
     self->cluster_event_base = event_base_new();
     if (redisClusterLibeventAttach(self->acc, self->cluster_event_base) != REDIS_OK) {
         return newSVpvf("%s", "failed to attach event base");
     }
 
+    self->event_ready = 0;
+    if (redisClusterSetEventCallback(self->acc->cc, eventCallback, self) != REDIS_OK) {
+        return newSVpvf("%s", "failed to set event callback");
+    }
+
+    if (redisClusterAsyncConnect2(self->acc) != REDIS_OK) {
+        return newSVpvf("failed to connect async: %s", self->acc->cc->errstr);
+    }
+
     DEBUG_MSG("%s", "done connect");
-    return &PL_sv_undef;
+    return NULL;
+}
+
+SV *Redis__Cluster__Fast_disconnect(pTHX_ Redis__Cluster__Fast self) {
+    if (event_reinit(self->cluster_event_base) != 0) {
+        return newSVpvf("%s", "event reinit failed");
+    }
+    redisClusterAsyncDisconnect(self->acc);
+
+    if (event_base_dispatch(self->cluster_event_base) == -1) {
+        return newSVpvf("%s", "event_base_dispatch failed after forking");
+    }
+    event_base_free(self->cluster_event_base);
+    self->cluster_event_base = NULL;
+
+    redisClusterAsyncFree(self->acc);
+    self->acc = NULL;
+    return NULL;
+}
+
+SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self) {
+    int event_loop_error;
+    int count = 0;
+    int64_t timeout_after = hi_usec_now() + self->discovery_timeout_usec;
+
+    DEBUG_MSG("%s", "start wait_until_event_ready");
+    while (!self->event_ready) {
+        DEBUG_EVENT_BASE();
+        if (count >= MIN_ATTEMPT_TO_GET_RESULT && hi_usec_now() > timeout_after) {
+            return newSVpvf("%s", "Timeout. The cluster discovery timeout reached.");
+        }
+
+        event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
+        if (event_loop_error == -1) {
+            return newSVpvf("%s", "event_base_loop failed");
+        }
+        if (event_loop_error == 1) {
+            return newSVpvf("%s", "Timeout. All of the given hostnames are unreachable.");
+        };
+        count++;
+    }
+    DEBUG_MSG("%s", "done wait_until_event_ready");
+    return NULL;
 }
 
 cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
@@ -221,39 +281,10 @@ cluster_node *get_node_by_random(pTHX_ Redis__Cluster__Fast self) {
     return selected;
 }
 
-void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
-                                  cmd_reply_context_t *reply_t) {
+void run_cmd_impl(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
+                  cmd_reply_context_t *reply_t) {
     int status, event_loop_error;
-    pid_t current_pid;
-
     DEBUG_MSG("start: %s", *argv);
-
-    reply_t->done = 0;
-    reply_t->self = (void *) self;
-    reply_t->result = NULL;
-    reply_t->error = NULL;
-
-    current_pid = getpid();
-    if (self->pid != current_pid) {
-        DEBUG_MSG("%s", "pid changed");
-        if (event_reinit(self->cluster_event_base) != 0) {
-            reply_t->error = newSVpvf("%s", "event reinit failed");
-            return;
-        }
-        redisClusterAsyncDisconnect(self->acc);
-
-        if (event_base_dispatch(self->cluster_event_base) == -1) {
-            reply_t->error = newSVpvf("%s", "event_base_dispatch failed after forking");
-            return;
-        }
-
-        if (redisClusterConnect2(self->acc->cc) != REDIS_OK) {
-            reply_t->error = newSVpvf("failed to re-connect: %s", self->acc->cc->errstr);
-            return;
-        }
-
-        self->pid = current_pid;
-    }
 
     status = redisClusterAsyncCommandArgv(self->acc, replyCallback, reply_t, argc, argv, argvlen);
     if (status != REDIS_OK) {
@@ -294,6 +325,34 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
     }
 }
 
+void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
+                                  cmd_reply_context_t *reply_t) {
+    reply_t->self = (void *) self;
+    reply_t->result = NULL;
+    reply_t->error = NULL;
+    reply_t->done = 0;
+
+    if (self->pid != getpid()) {
+        DEBUG_MSG("%s", "pid changed");
+        reply_t->error = Redis__Cluster__Fast_disconnect(aTHX_ self);
+        if (reply_t->error) {
+            return;
+        }
+
+        reply_t->error = Redis__Cluster__Fast_connect(aTHX_ self);
+        if (reply_t->error) {
+            return;
+        }
+
+        reply_t->error = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self);
+        if (reply_t->error) {
+            return;
+        }
+    }
+
+    run_cmd_impl(aTHX_ self, argc, argv, argvlen, reply_t);
+}
+
 MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
 
 PROTOTYPES: DISABLE
@@ -307,6 +366,11 @@ CODE:
     RETVAL = self;
 OUTPUT:
     RETVAL
+
+void
+__srandom(char *cls, unsigned int seed)
+CODE:
+    srandom(seed);
 
 int
 __set_debug(Redis::Cluster::Fast self, int val)
@@ -367,10 +431,29 @@ __set_route_use_slots(Redis::Cluster::Fast self, int use_slot)
 CODE:
     self->use_cluster_slots = use_slot;
 
+void
+__set_cluster_discovery_retry_timeout(Redis::Cluster::Fast self, double double_sec)
+CODE:
+    self->discovery_timeout_usec = (int64_t) (double_sec * ONE_SECOND_TO_MICRO);
+    DEBUG_MSG("discovery timeout %ld", self->discovery_timeout_usec);
+
 SV*
 __connect(Redis::Cluster::Fast self)
 CODE:
     RETVAL = Redis__Cluster__Fast_connect(aTHX_ self);
+    if (RETVAL == NULL) {
+        RETVAL = &PL_sv_undef;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
+__wait_until_event_ready(Redis::Cluster::Fast self)
+CODE:
+    RETVAL = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self);
+    if (RETVAL == NULL) {
+        RETVAL = &PL_sv_undef;
+    }
 OUTPUT:
     RETVAL
 
@@ -417,7 +500,9 @@ CODE:
         DEBUG_MSG("%s", "trying to free event_base");
         if ((self->pid == getpid()) || (event_reinit(self->cluster_event_base) == 0)){
             redisClusterAsyncDisconnect(self->acc);
-            event_base_dispatch(self->cluster_event_base);
+            if (event_base_dispatch(self->cluster_event_base) == -1) {
+                warn("event_base_dispatch failed.");
+            }
             event_base_free(self->cluster_event_base);
             self->cluster_event_base = NULL;
         } else {

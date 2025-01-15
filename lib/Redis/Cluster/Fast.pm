@@ -9,12 +9,18 @@ our $VERSION = "0.092";
 use constant {
     DEFAULT_COMMAND_TIMEOUT => 1.0,
     DEFAULT_CONNECT_TIMEOUT => 1.0,
+    DEFAULT_CLUSTER_DISCOVERY_RETRY_TIMEOUT => 1.0,
     DEFAULT_MAX_RETRY_COUNT => 5,
     DEBUG_REDIS_CLUSTER_FAST => $ENV{DEBUG_PERL_REDIS_CLUSTER_FAST} ? 1 : 0,
 };
 
 use XSLoader;
 XSLoader::load(__PACKAGE__, $VERSION);
+
+sub srandom {
+    my $seed = shift;
+    __PACKAGE__->__srandom($seed);
+}
 
 sub new {
     my ($class, %args) = @_;
@@ -35,6 +41,10 @@ sub new {
     $command_timeout = DEFAULT_COMMAND_TIMEOUT unless defined $command_timeout;
     $self->__set_command_timeout($command_timeout);
 
+    my $discovery_timeout = $args{cluster_discovery_retry_timeout};
+    $discovery_timeout = DEFAULT_CLUSTER_DISCOVERY_RETRY_TIMEOUT unless defined $discovery_timeout;
+    $self->__set_cluster_discovery_retry_timeout($discovery_timeout);
+
     my $max_retry = $args{max_retry_count};
     $max_retry = DEFAULT_MAX_RETRY_COUNT unless defined $max_retry;
     $self->__set_max_retry($max_retry);
@@ -42,6 +52,9 @@ sub new {
     $self->__set_route_use_slots($args{route_use_slots} ? 1 : 0);
 
     my $error = $self->__connect();
+    croak $error if $error;
+
+    $error = $self->__wait_until_event_ready();
     croak $error if $error;
     return $self;
 }
@@ -94,6 +107,8 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
 =head1 SYNOPSIS
 
     use Redis::Cluster::Fast;
+
+    Redis::Cluster::Fast::srandom(100);
 
     my $redis = Redis::Cluster::Fast->new(
         startup_nodes => [
@@ -166,6 +181,13 @@ The benchmark script used can be found under examples directory.
 
 =head1 METHODS
 
+=head2 srandom($seed)
+
+hiredis-cluster uses L<random()|https://linux.die.net/man/3/random> to select a node used for requesting cluster topology.
+
+C<$seed> is expected to be an unsigned integer value,
+and is used as an argument for L<srandom()|https://linux.die.net/man/3/srandom>.
+
 =head2 new(%args)
 
 Following arguments are available.
@@ -194,6 +216,13 @@ The client will retry calling the Redis Command only if it successfully get one 
 MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
 C<max_retry_count> is the maximum number of retries and must be 1 or above.
+
+=head3 cluster_discovery_retry_timeout
+
+A fractional value. (default: 1.0)
+
+Specify the number of seconds to treat a series of cluster topology requests as timed out without retrying the operation.
+At least one operation will be attempted, and the time taken for the initial operation will also be measured.
 
 =head3 route_use_slots
 

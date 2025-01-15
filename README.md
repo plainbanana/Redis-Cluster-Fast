@@ -7,6 +7,8 @@ Redis::Cluster::Fast - A fast perl binding for Redis Cluster
 
     use Redis::Cluster::Fast;
 
+    Redis::Cluster::Fast::srandom(100);
+
     my $redis = Redis::Cluster::Fast->new(
         startup_nodes => [
             'localhost:9000',
@@ -78,6 +80,13 @@ The benchmark script used can be found under examples directory.
 
 # METHODS
 
+## srandom($seed)
+
+hiredis-cluster uses [random()](https://linux.die.net/man/3/random) to select a node used for requesting cluster topology.
+
+`$seed` is expected to be an unsigned integer value,
+and is used as an argument for [srandom()](https://linux.die.net/man/3/srandom).
+
 ## new(%args)
 
 Following arguments are available.
@@ -106,6 +115,13 @@ The client will retry calling the Redis Command only if it successfully get one 
 MOVED, ASK, TRYAGAIN, CLUSTERDOWN.
 
 `max_retry_count` is the maximum number of retries and must be 1 or above.
+
+### cluster\_discovery\_retry\_timeout
+
+A fractional value. (default: 1.0)
+
+Specify the number of seconds to treat a series of cluster topology requests as timed out without retrying the operation.
+At least one operation will be attempted, and the time taken for the initial operation will also be measured.
 
 ### route\_use\_slots
 
