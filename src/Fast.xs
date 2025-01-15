@@ -368,9 +368,9 @@ OUTPUT:
     RETVAL
 
 void
-__srandom(char *cls, unsigned int seed)
+__srandom(char *cls, unsigned int seed_value)
 CODE:
-    srandom(seed);
+    srandom(seed_value);
 
 int
 __set_debug(Redis::Cluster::Fast self, int val)
