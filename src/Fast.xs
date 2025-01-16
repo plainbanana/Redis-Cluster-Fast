@@ -10,9 +10,9 @@ extern "C" {
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <time.h>
 #include "hiredis_cluster/adapters/libevent.h"
 #include "hiredis_cluster/hircluster.h"
-#include "hiredis_cluster/hiutil.h"
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -23,6 +23,7 @@ extern "C" {
 #include "ppport.h"
 
 #define ONE_SECOND_TO_MICRO 1000000
+#define NANO_SECOND_TO_MICRO 1000
 
 #define MIN_ATTEMPT_TO_GET_RESULT 2
 
@@ -63,6 +64,16 @@ typedef struct redis_cluster_fast_s {
     int64_t discovery_timeout_usec;
     pid_t pid;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
+
+int64_t get_usec_timestamp(void) {
+    struct timespec ts;
+    int status;
+    status = clock_gettime(CLOCK_MONOTONIC, &ts);
+    if (status < 0) {
+        return -1;
+    }
+    return (int64_t) ts.tv_sec * ONE_SECOND_TO_MICRO + (int64_t) (ts.tv_nsec / NANO_SECOND_TO_MICRO);
+}
 
 static redis_cluster_fast_reply_t
 Redis__Cluster__Fast_decode_reply(pTHX_ Redis__Cluster__Fast self, redisReply *reply) {
@@ -239,13 +250,25 @@ SV *Redis__Cluster__Fast_disconnect(pTHX_ Redis__Cluster__Fast self) {
 SV *Redis__Cluster__Fast_wait_until_event_ready(pTHX_ Redis__Cluster__Fast self) {
     int event_loop_error;
     int count = 0;
-    int64_t timeout_after = hi_usec_now() + self->discovery_timeout_usec;
+    int64_t timestamp_current, timeout_after;
+
+    timestamp_current = get_usec_timestamp();
+    if (timestamp_current < 0) {
+        return newSVpvf("%s", "failed to get current timestamp");
+    }
+    timeout_after = timestamp_current + self->discovery_timeout_usec;
 
     DEBUG_MSG("%s", "start wait_until_event_ready");
     while (!self->event_ready) {
         DEBUG_EVENT_BASE();
-        if (count >= MIN_ATTEMPT_TO_GET_RESULT && hi_usec_now() > timeout_after) {
-            return newSVpvf("%s", "Timeout. The cluster discovery timeout reached.");
+        if (count >= MIN_ATTEMPT_TO_GET_RESULT) {
+            timestamp_current = get_usec_timestamp();
+            if (timestamp_current < 0) {
+                return newSVpvf("%s", "failed to get current timestamp");
+            }
+            if (timestamp_current > timeout_after) {
+                return newSVpvf("%s", "Timeout. The cluster discovery timeout reached.");
+            }
         }
 
         event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
@@ -368,9 +391,9 @@ OUTPUT:
     RETVAL
 
 void
-__srandom(char *cls, unsigned int seed)
+__srandom(char *cls, unsigned int seed_value)
 CODE:
-    srandom(seed);
+    srandom(seed_value);
 
 int
 __set_debug(Redis::Cluster::Fast self, int val)
