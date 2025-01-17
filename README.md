@@ -173,6 +173,20 @@ The return value can be either 0 for normal, 1 for no callbacks executed, or -1 
 If there are any unexcuted callbacks, it will block until all of them are executed.
 The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
 
+## disconnect()
+
+Normally you should not call `disconnect` manually.
+If you want to call fork(), `disconnect` should be call before fork().
+
+The return value is an error.
+
+## connect()
+
+Normally you should not call `connect` manually.
+If you want to call fork(), `connect` should be call after fork().
+
+The return value is an error.
+
 # LICENSE
 
 Copyright (C) plainbanana.

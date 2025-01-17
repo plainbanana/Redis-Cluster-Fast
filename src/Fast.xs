@@ -617,6 +617,16 @@ OUTPUT:
     RETVAL
 
 SV*
+__disconnect(Redis::Cluster::Fast self)
+CODE:
+    RETVAL = Redis__Cluster__Fast_disconnect(aTHX_ self);
+    if (RETVAL == NULL) {
+        RETVAL = &PL_sv_undef;
+    }
+OUTPUT:
+    RETVAL
+
+SV*
 __wait_until_event_ready(Redis::Cluster::Fast self)
 CODE:
     RETVAL = Redis__Cluster__Fast_wait_until_event_ready(aTHX_ self);

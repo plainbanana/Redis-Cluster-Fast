@@ -69,6 +69,18 @@ sub wait_all_response {
     $self->__wait_all_response();
 }
 
+sub disconnect {
+    my $self = shift;
+    $self->__disconnect();
+}
+
+sub connect {
+    my $self = shift;
+    my $error = $self->__connect();
+    return $error if $error;
+    $self->__wait_until_event_ready();
+}
+
 ### Deal with common, general case, Redis commands
 our $AUTOLOAD;
 
@@ -283,6 +295,20 @@ The return value can be either 0 for normal, 1 for no callbacks executed, or -1 
 
 If there are any unexcuted callbacks, it will block until all of them are executed.
 The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
+
+=head2 disconnect()
+
+Normally you should not call C<disconnect> manually.
+If you want to call fork(), C<disconnect> should be call before fork().
+
+The return value is an error.
+
+=head2 connect()
+
+Normally you should not call C<connect> manually.
+If you want to call fork(), C<connect> should be call after fork().
+
+The return value is an error.
 
 =head1 LICENSE
 
