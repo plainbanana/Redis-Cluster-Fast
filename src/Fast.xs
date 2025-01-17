@@ -51,6 +51,13 @@ typedef struct cmd_reply_context_s {
     int done;
 } cmd_reply_context_t;
 
+typedef struct cmd_reply_context_pipeline_s {
+    void *self;
+    SV *result;
+    SV *error;
+    SV *cb;
+} cmd_reply_context_pipeline_t;
+
 typedef struct redis_cluster_fast_s {
     redisClusterAsyncContext *acc;
     struct event_base *cluster_event_base;
@@ -63,6 +70,7 @@ typedef struct redis_cluster_fast_s {
     struct timeval command_timeout;
     int64_t discovery_timeout_usec;
     pid_t pid;
+    int64_t pipeline_callback_remain;
 } redis_cluster_fast_t, *Redis__Cluster__Fast;
 
 int64_t get_usec_timestamp(void) {
@@ -176,6 +184,53 @@ void replyCallback(redisClusterAsyncContext *cc, void *r, void *privdata) {
     }
 
     reply_t->done = 1;
+}
+
+void replyCallbackPipeline(redisClusterAsyncContext *cc, void *r, void *privdata) {
+    dTHX;
+
+    cmd_reply_context_pipeline_t *reply_pipeline_t;
+    Redis__Cluster__Fast self;
+    redisReply *reply;
+
+    reply_pipeline_t = (cmd_reply_context_pipeline_t *) privdata;
+    self = (Redis__Cluster__Fast) reply_pipeline_t->self;
+    DEBUG_MSG("replycb pipeline %s", "start");
+
+    reply = (redisReply *) r;
+    if (reply) {
+        redis_cluster_fast_reply_t res;
+        res = Redis__Cluster__Fast_decode_reply(aTHX_ self, reply);
+        reply_pipeline_t->result = res.result;
+        reply_pipeline_t->error = res.error;
+    } else {
+        DEBUG_MSG("error: err=%d errstr=%s", cc->err, cc->errstr);
+        reply_pipeline_t->error = newSVpvf("%s", cc->errstr);
+    }
+
+    {
+        dSP;
+
+        ENTER;
+        SAVETMPS;
+
+        PUSHMARK(SP);
+        EXTEND(SP, 2);
+        PUSHs(reply_pipeline_t->result ? sv_2mortal(reply_pipeline_t->result) : &PL_sv_undef);
+        PUSHs(reply_pipeline_t->error ? sv_2mortal(reply_pipeline_t->error) : &PL_sv_undef);
+        PUTBACK;
+
+        call_sv(reply_pipeline_t->cb, G_DISCARD);
+
+        FREETMPS;
+        LEAVE;
+    }
+
+    SvREFCNT_dec(reply_pipeline_t->cb);
+    Safefree(reply_pipeline_t);
+
+    self->pipeline_callback_remain--;
+    DEBUG_MSG("pipeline callback remain: %ld", self->pipeline_callback_remain);
 }
 
 void eventCallback(const redisClusterContext *cc, int event, void *privdata) {
@@ -348,8 +403,88 @@ void run_cmd_impl(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, 
     }
 }
 
+void run_cmd_impl_pipeline(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
+                  cmd_reply_context_t *reply_t, SV *cb) {
+    int status;
+
+    /* In pipeline mode, the callback are executed later, so it is necessary to create a dedicated reply context.
+       This context is freed when the callback is executed. */
+    cmd_reply_context_pipeline_t *reply_pipeline_t;
+    Newx(reply_pipeline_t, sizeof(cmd_reply_context_pipeline_t), cmd_reply_context_pipeline_t);
+
+    reply_pipeline_t->self = (void *) self;
+    reply_pipeline_t->result = NULL;
+    reply_pipeline_t->error = NULL;
+    reply_pipeline_t->cb = SvREFCNT_inc(cb);
+
+    DEBUG_MSG("start pipeline: %s", *argv);
+
+    status = redisClusterAsyncCommandArgv(self->acc, replyCallbackPipeline, reply_pipeline_t, argc, argv, argvlen);
+    if (status != REDIS_OK) {
+        if (self->acc->err == REDIS_ERR_OTHER &&
+            strcmp(self->acc->errstr, "No keys in command(must have keys for redis cluster mode)") == 0) {
+            cluster_node *node;
+
+            DEBUG_MSG("not cluster command, fallback to CommandToNode: err=%d errstr=%s",
+                      self->acc->err,
+                      self->acc->errstr);
+
+            node = get_node_by_random(aTHX_ self);
+            if (node == NULL) {
+                reply_t->error = newSVpvf("%s", "No node found");
+                return;
+            }
+
+            status = redisClusterAsyncCommandArgvToNode(self->acc, node, replyCallbackPipeline, reply_pipeline_t, argc, argv, argvlen);
+            if (status != REDIS_OK) {
+                DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
+                reply_t->error = newSVpvf("%s", self->acc->errstr);
+                return;
+            }
+        } else {
+            DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
+            reply_t->error = newSVpvf("%s", self->acc->errstr);
+            return;
+        }
+    }
+
+    self->pipeline_callback_remain++;
+    DEBUG_MSG("pipeline callback remain: %ld", self->pipeline_callback_remain);
+}
+
+int Redis__Cluster__Fast_wait_one_response(pTHX_ Redis__Cluster__Fast self) {
+    int event_loop_error;
+    int64_t callback_remain_current = self->pipeline_callback_remain;
+    if (callback_remain_current <= 0) {
+        return 1;
+    }
+    while (self->pipeline_callback_remain == callback_remain_current) {
+        DEBUG_EVENT_BASE();
+        event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
+        if (event_loop_error != 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int Redis__Cluster__Fast_wait_all_response(pTHX_ Redis__Cluster__Fast self) {
+    int event_loop_error;
+    if (self->pipeline_callback_remain <= 0) {
+        return 1;
+    }
+    while (self->pipeline_callback_remain > 0) {
+        DEBUG_EVENT_BASE();
+        event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE);
+        if (event_loop_error != 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,
-                                  cmd_reply_context_t *reply_t) {
+                                  cmd_reply_context_t *reply_t, SV *cb) {
     reply_t->self = (void *) self;
     reply_t->result = NULL;
     reply_t->error = NULL;
@@ -373,7 +508,11 @@ void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, con
         }
     }
 
-    run_cmd_impl(aTHX_ self, argc, argv, argvlen, reply_t);
+    if (cb) {
+        run_cmd_impl_pipeline(aTHX_ self, argc, argv, argvlen, reply_t, cb);
+    } else {
+        run_cmd_impl(aTHX_ self, argc, argv, argvlen, reply_t);
+    }
 }
 
 MODULE = Redis::Cluster::Fast    PACKAGE = Redis::Cluster::Fast
@@ -488,12 +627,20 @@ PREINIT:
     size_t* argvlen;
     STRLEN len;
     int argc, i;
+    SV* cb;
 PPCODE:
     if (!self->acc) {
        croak("Not connected to any server");
     }
 
-    argc = items - 1;
+    cb = ST(items - 1);
+    if (SvROK(cb) && SvTYPE(SvRV(cb)) == SVt_PVCV) {
+        argc = items - 2;
+    } else {
+        cb = NULL;
+        argc = items - 1;
+    }
+
     Newx(argv, sizeof(char*) * argc, char*);
     Newx(argvlen, sizeof(size_t) * argc, size_t);
     Newx(result_context, sizeof(cmd_reply_context_t), cmd_reply_context_t);
@@ -503,7 +650,7 @@ PPCODE:
         argvlen[i] = len;
     }
 
-    Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context);
+    Redis__Cluster__Fast_run_cmd(aTHX_ self, argc, (const char **) argv, argvlen, result_context, cb);
 
     ST(0) = result_context->result ?
             sv_2mortal(result_context->result) : &PL_sv_undef;
@@ -515,6 +662,20 @@ PPCODE:
     Safefree(result_context);
 
     XSRETURN(2);
+
+int
+__wait_one_response(Redis::Cluster::Fast self)
+CODE:
+    RETVAL = Redis__Cluster__Fast_wait_one_response(aTHX_ self);
+OUTPUT:
+    RETVAL
+
+int
+__wait_all_response(Redis::Cluster::Fast self)
+CODE:
+    RETVAL = Redis__Cluster__Fast_wait_all_response(aTHX_ self);
+OUTPUT:
+    RETVAL
 
 void
 DESTROY(Redis::Cluster::Fast self)

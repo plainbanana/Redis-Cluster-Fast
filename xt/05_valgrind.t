@@ -75,4 +75,42 @@ eval {
     $redis_2->ping;
 }
 
+{
+    my $redis = Redis::Cluster::Fast->new(
+        startup_nodes => get_startup_nodes,
+    );
+    $redis->del('pipeline');
+
+    $redis->set('pipeline', 12345, sub {
+        my ($result, $error) = @_;
+    });
+    $redis->get('pipeline', sub {
+        my ($result, $error) = @_;
+    });
+    $redis->get('pipeline', sub {
+        my ($result, $error) = @_;
+    });
+    $redis->wait_all_response;
+    $redis->wait_all_response;
+}
+
+{
+    my $redis = Redis::Cluster::Fast->new(
+        startup_nodes => get_startup_nodes,
+    );
+    $redis->del('pipeline');
+
+    $redis->set('pipeline', 12345, sub {
+        my ($result, $error) = @_;
+    });
+    $redis->get('pipeline', sub {
+        my ($result, $error) = @_;
+    });
+    $redis->get('pipeline', sub {
+        my ($result, $error) = @_;
+    });
+    $redis->wait_one_response;
+    $redis->wait_one_response;
+}
+
 done_testing;

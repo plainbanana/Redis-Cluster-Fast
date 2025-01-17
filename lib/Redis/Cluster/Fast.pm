@@ -59,6 +59,16 @@ sub new {
     return $self;
 }
 
+sub wait_one_response {
+    my $self = shift;
+    $self->__wait_one_response();
+}
+
+sub wait_all_response {
+    my $self = shift;
+    $self->__wait_all_response();
+}
+
 ### Deal with common, general case, Redis commands
 our $AUTOLOAD;
 
@@ -239,6 +249,37 @@ The command can also be expressed by concatenating the subcommands with undersco
     e.g. cluster_info
 
 It does not support (Sharded) Pub/Sub family of commands and should not be run.
+
+=head2 <command>(@args, sub {})
+
+To run a Redis command in pipeline with arguments and a callback.
+
+The command can also be expressed by concatenating the subcommands with underscores.
+
+Commands issued to the same node are sent and received in pipeline mode.
+In pipeline mode, commands are not sent to Redis until C<wait_one_response> or C<wait_all_response> is issued.
+
+The callback is executed with two arguments.
+The first is the result of the command, and the second is the error message.
+C<result> will be a scalar value or an array reference, and C<$error> will be an undefined value if no errors occur.
+Also, C<error> may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
+
+You cannot call any client methods inside the callback.
+
+    $redis->get('test', sub {
+        my ($result, $error) = @_;
+        # some operations...
+    });
+
+=head2 wait_one_response
+
+If there are any unexcuted callbacks, it will block until at least one is executed.
+The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
+
+=head2 wait_all_response
+
+If there are any unexcuted callbacks, it will block until all of them are executed.
+The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
 
 =head1 LICENSE
 
