@@ -259,6 +259,9 @@ The command can also be expressed by concatenating the subcommands with undersco
 Commands issued to the same node are sent and received in pipeline mode.
 In pipeline mode, commands are not sent to Redis until C<wait_one_response> or C<wait_all_response> is issued.
 
+DO NOT execute fork() without issuing C<wait_one_response> or C<wait_all_response> after issuing a command in pipeline mode.
+If there are unexecuted callbacks, the command will be sent to Redis from both the parent process and the child process.
+
 The callback is executed with two arguments.
 The first is the result of the command, and the second is the error message.
 C<result> will be a scalar value or an array reference, and C<$error> will be an undefined value if no errors occur.
