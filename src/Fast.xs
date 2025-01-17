@@ -244,6 +244,7 @@ void eventCallback(const redisClusterContext *cc, int event, void *privdata) {
 SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     DEBUG_MSG("%s", "start connect");
 
+    self->pipeline_callback_remain = 0;
     self->pid = getpid();
 
     self->acc = redisClusterAsyncContextInit();
