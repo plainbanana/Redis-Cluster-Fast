@@ -287,6 +287,10 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
 }
 
 SV *Redis__Cluster__Fast_disconnect(pTHX_ Redis__Cluster__Fast self) {
+    if (self->cluster_event_base == NULL && self->acc == NULL) {
+        return NULL;
+    }
+
     if (event_reinit(self->cluster_event_base) != 0) {
         return newSVpvf("%s", "event reinit failed");
     }
