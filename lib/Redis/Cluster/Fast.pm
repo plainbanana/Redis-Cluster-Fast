@@ -271,15 +271,15 @@ The command can also be expressed by concatenating the subcommands with undersco
 Commands issued to the same node are sent and received in pipeline mode.
 In pipeline mode, commands are not sent to Redis until C<wait_one_response> or C<wait_all_responses> is issued.
 
-DO NOT execute fork() without issuing C<wait_one_response> or C<wait_all_responses> after issuing a command in pipeline mode.
-If there are unexecuted callbacks, the command will be sent to Redis from both the parent process and the child process.
-
 The callback is executed with two arguments.
 The first is the result of the command, and the second is the error message.
 C<result> will be a scalar value or an array reference, and C<$error> will be an undefined value if no errors occur.
 Also, C<error> may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
 
 You cannot call any client methods inside the callback.
+
+Do not execute fork() without issuing C<wait_one_response> or C<wait_all_responses> and C<disconnect> after issuing a command in pipeline mode.
+If there are unexecuted callbacks, the command may be sent from both the parent process and the child process.
 
     $redis->get('test', sub {
         my ($result, $error) = @_;
@@ -302,6 +302,8 @@ Normally you should not call C<disconnect> manually.
 If you want to call fork(), C<disconnect> should be call before fork().
 
 The return value is an error.
+
+It will be blocked until all unexecuted commands are executed, and then it will disconnect.
 
 =head2 connect()
 
