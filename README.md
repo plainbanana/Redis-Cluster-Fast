@@ -150,8 +150,8 @@ In pipeline mode, commands are not sent to Redis until `wait_one_response` or `w
 
 The callback is executed with two arguments.
 The first is the result of the command, and the second is the error message.
-`result` will be a scalar value or an array reference, and `$error` will be an undefined value if no errors occur.
-Also, `error` may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
+`$result` will be a scalar value or an array reference, and `$error` will be an undefined value if no errors occur.
+Also, `$error` may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
 
 You cannot call any client methods inside the callback.
 
