@@ -31,9 +31,19 @@ if ($pid == 0) {
 
 is $redis->get('test-fork'), 2;
 
+my $res;
+$redis->mget('{my}hoge', '{my}fuga', sub {
+    my ($result, $error) = @_;
+    $res = $result;
+});
+$redis->wait_all_responses;
+is_deeply $res, [ 'test1', 'test2' ];
+$redis->disconnect;
+
 $pid = fork;
 if ($pid == 0) {
     # child
+    $redis->connect;
     my $res;
     $redis->mget('{my}hoge', '{my}fuga', sub {
         my ($result, $error) = @_;
@@ -44,6 +54,7 @@ if ($pid == 0) {
     exit 0;
 } else {
     # parent
+    $redis->connect;
     my $res;
     $redis->mget('{my}foo', '{my}bar', sub {
         my ($result, $error) = @_;
