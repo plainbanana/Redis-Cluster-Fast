@@ -69,9 +69,9 @@ no_leaks_ok {
     $redis->get('pipeline', sub {
         my ($result, $error) = @_;
     });
-    $redis->wait_all_response;
-    $redis->wait_all_response;
-} "No Memory leak - pipeline wait_all_response";
+    $redis->wait_all_responses;
+    $redis->wait_all_responses;
+} "No Memory leak - pipeline wait_all_responses";
 
 no_leaks_ok {
     my $redis = Redis::Cluster::Fast->new(

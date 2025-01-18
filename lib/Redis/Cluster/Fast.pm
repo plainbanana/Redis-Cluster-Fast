@@ -64,9 +64,9 @@ sub wait_one_response {
     $self->__wait_one_response();
 }
 
-sub wait_all_response {
+sub wait_all_responses {
     my $self = shift;
-    $self->__wait_all_response();
+    $self->__wait_all_responses();
 }
 
 sub disconnect {
@@ -269,9 +269,9 @@ To run a Redis command in pipeline with arguments and a callback.
 The command can also be expressed by concatenating the subcommands with underscores.
 
 Commands issued to the same node are sent and received in pipeline mode.
-In pipeline mode, commands are not sent to Redis until C<wait_one_response> or C<wait_all_response> is issued.
+In pipeline mode, commands are not sent to Redis until C<wait_one_response> or C<wait_all_responses> is issued.
 
-DO NOT execute fork() without issuing C<wait_one_response> or C<wait_all_response> after issuing a command in pipeline mode.
+DO NOT execute fork() without issuing C<wait_one_response> or C<wait_all_responses> after issuing a command in pipeline mode.
 If there are unexecuted callbacks, the command will be sent to Redis from both the parent process and the child process.
 
 The callback is executed with two arguments.
@@ -291,7 +291,7 @@ You cannot call any client methods inside the callback.
 If there are any unexcuted callbacks, it will block until at least one is executed.
 The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
 
-=head2 wait_all_response()
+=head2 wait_all_responses()
 
 If there are any unexcuted callbacks, it will block until all of them are executed.
 The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.

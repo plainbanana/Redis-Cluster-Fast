@@ -39,7 +39,7 @@ if ($pid == 0) {
         my ($result, $error) = @_;
         $res = $result;
     });
-    $redis->wait_all_response;
+    $redis->wait_all_responses;
     is_deeply $res, [ 'test1', 'test2' ];
     exit 0;
 } else {
@@ -49,7 +49,7 @@ if ($pid == 0) {
         my ($result, $error) = @_;
         $res = $result;
     });
-    $redis->wait_all_response;
+    $redis->wait_all_responses;
     is_deeply $res, [ 'FOO', 'BAR' ];
     waitpid($pid, 0);
 }

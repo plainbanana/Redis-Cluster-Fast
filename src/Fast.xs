@@ -472,7 +472,7 @@ int Redis__Cluster__Fast_wait_one_response(pTHX_ Redis__Cluster__Fast self) {
     return 0;
 }
 
-int Redis__Cluster__Fast_wait_all_response(pTHX_ Redis__Cluster__Fast self) {
+int Redis__Cluster__Fast_wait_all_responses(pTHX_ Redis__Cluster__Fast self) {
     int event_loop_error;
     if (self->pipeline_callback_remain <= 0) {
         return 1;
@@ -688,9 +688,9 @@ OUTPUT:
     RETVAL
 
 int
-__wait_all_response(Redis::Cluster::Fast self)
+__wait_all_responses(Redis::Cluster::Fast self)
 CODE:
-    RETVAL = Redis__Cluster__Fast_wait_all_response(aTHX_ self);
+    RETVAL = Redis__Cluster__Fast_wait_all_responses(aTHX_ self);
 OUTPUT:
     RETVAL
 

@@ -90,8 +90,8 @@ eval {
     $redis->get('pipeline', sub {
         my ($result, $error) = @_;
     });
-    $redis->wait_all_response;
-    $redis->wait_all_response;
+    $redis->wait_all_responses;
+    $redis->wait_all_responses;
 }
 
 {
