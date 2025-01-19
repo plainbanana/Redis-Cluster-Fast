@@ -166,12 +166,12 @@ If there are unexecuted callbacks, the command may be sent from both the parent 
 ## wait\_one\_response()
 
 If there are any unexcuted callbacks, it will block until at least one is executed.
-The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
+The return value can be either 0 for normal, 1 for no callbacks remained, or -1 for other errors.
 
 ## wait\_all\_responses()
 
 If there are any unexcuted callbacks, it will block until all of them are executed.
-The return value can be either 0 for normal, 1 for no callbacks executed, or -1 for other errors.
+The return value can be either 0 for normal, 1 for no callbacks remained, or -1 for other errors.
 
 ## disconnect()
 
