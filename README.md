@@ -180,16 +180,12 @@ The return value can be either 0 for normal, 1 for no callbacks remained, or -1 
 Normally you should not call `disconnect` manually.
 If you want to call fork(), `disconnect` should be call before fork().
 
-The return value is an error.
-
 It will be blocked until all unexecuted commands are executed, and then it will disconnect.
 
 ## connect()
 
 Normally you should not call `connect` manually.
 If you want to call fork(), `connect` should be call after fork().
-
-The return value is an error.
 
 # LICENSE
 
