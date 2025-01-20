@@ -95,6 +95,8 @@ sub AUTOLOAD {
         my $self = shift;
         my @arguments = @_;
         for my $index (0 .. $#arguments) {
+            next if ref $arguments[$index] eq 'CODE';
+
             utf8::downgrade($arguments[$index], 1)
                 or croak 'command sent is not an octet sequence in the native encoding (Latin-1).';
         }
