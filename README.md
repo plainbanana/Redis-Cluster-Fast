@@ -139,6 +139,8 @@ The command can also be expressed by concatenating the subcommands with undersco
 
 It does not support (Sharded) Pub/Sub family of commands and should not be run.
 
+Please issue `disconnect` in advance if you are going to excute fork() after issuing a command.
+
 ## &lt;command>(@args, sub {})
 
 To run a Redis command in pipeline with arguments and a callback.
@@ -155,8 +157,8 @@ Also, `$error` may contain an error returned from Redis or an error that occurre
 
 You cannot call any client methods inside the callback.
 
-Do not execute fork() without issuing `wait_one_response` or `wait_all_responses` and `disconnect` after issuing a command in pipeline mode.
-If there are unexecuted callbacks, the command may be sent from both the parent process and the child process.
+After issuing a command in pipeline mode,
+do not execute fork() without issuing `disconnect` if all callbacks are not executed completely.
 
     $redis->get('test', sub {
         my ($result, $error) = @_;
