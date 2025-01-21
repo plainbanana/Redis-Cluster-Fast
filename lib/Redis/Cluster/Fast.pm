@@ -59,6 +59,34 @@ sub new {
     return $self;
 }
 
+sub wait_one_response {
+    my $self = shift;
+    my $result = $self->__wait_one_response();
+    return undef if $result == -1;
+    return $result;
+}
+
+sub wait_all_responses {
+    my $self = shift;
+    my $result = $self->__wait_all_responses();
+    return undef if $result == -1;
+    return $result;
+}
+
+sub disconnect {
+    my $self = shift;
+    my $error = $self->__disconnect();
+    croak $error if $error;
+}
+
+sub connect {
+    my $self = shift;
+    my $error = $self->__connect();
+    croak $error if $error;
+    $error = $self->__wait_until_event_ready();
+    croak $error if $error;
+}
+
 ### Deal with common, general case, Redis commands
 our $AUTOLOAD;
 
@@ -71,6 +99,8 @@ sub AUTOLOAD {
         my $self = shift;
         my @arguments = @_;
         for my $index (0 .. $#arguments) {
+            next if ref $arguments[$index] eq 'CODE';
+
             utf8::downgrade($arguments[$index], 1)
                 or croak 'command sent is not an octet sequence in the native encoding (Latin-1).';
         }
@@ -239,6 +269,54 @@ The command can also be expressed by concatenating the subcommands with undersco
     e.g. cluster_info
 
 It does not support (Sharded) Pub/Sub family of commands and should not be run.
+
+It is recommended to issue C<disconnect> in advance just to be safe when executing fork() after issuing the command.
+
+=head2 <command>(@args, sub {})
+
+To run a Redis command in pipeline with arguments and a callback.
+
+The command can also be expressed by concatenating the subcommands with underscores.
+
+Commands issued to the same node are sent and received in pipeline mode.
+In pipeline mode, commands are not sent to Redis until C<wait_one_response> or C<wait_all_responses> is issued.
+
+The callback is executed with two arguments.
+The first is the result of the command, and the second is the error message.
+C<$result> will be a scalar value or an array reference, and C<$error> will be an undefined value if no errors occur.
+Also, C<$error> may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
+
+You cannot call any client methods inside the callback.
+
+After issuing a command in pipeline mode,
+do not execute fork() without issuing C<disconnect> if all callbacks are not executed completely.
+
+    $redis->get('test', sub {
+        my ($result, $error) = @_;
+        # some operations...
+    });
+
+=head2 wait_one_response()
+
+If there are any unexcuted callbacks, it will block until at least one is executed.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
+
+=head2 wait_all_responses()
+
+If there are any unexcuted callbacks, it will block until all of them are executed.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
+
+=head2 disconnect()
+
+Normally you should not call C<disconnect> manually.
+If you want to call fork(), C<disconnect> should be call before fork().
+
+It will be blocked until all unexecuted commands are executed, and then it will disconnect.
+
+=head2 connect()
+
+Normally you should not call C<connect> manually.
+If you want to call fork(), C<connect> should be call after fork().
 
 =head1 LICENSE
 

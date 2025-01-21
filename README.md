@@ -139,6 +139,54 @@ The command can also be expressed by concatenating the subcommands with undersco
 
 It does not support (Sharded) Pub/Sub family of commands and should not be run.
 
+It is recommended to issue `disconnect` in advance just to be safe when executing fork() after issuing the command.
+
+## &lt;command>(@args, sub {})
+
+To run a Redis command in pipeline with arguments and a callback.
+
+The command can also be expressed by concatenating the subcommands with underscores.
+
+Commands issued to the same node are sent and received in pipeline mode.
+In pipeline mode, commands are not sent to Redis until `wait_one_response` or `wait_all_responses` is issued.
+
+The callback is executed with two arguments.
+The first is the result of the command, and the second is the error message.
+`$result` will be a scalar value or an array reference, and `$error` will be an undefined value if no errors occur.
+Also, `$error` may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
+
+You cannot call any client methods inside the callback.
+
+After issuing a command in pipeline mode,
+do not execute fork() without issuing `disconnect` if all callbacks are not executed completely.
+
+    $redis->get('test', sub {
+        my ($result, $error) = @_;
+        # some operations...
+    });
+
+## wait\_one\_response()
+
+If there are any unexcuted callbacks, it will block until at least one is executed.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
+
+## wait\_all\_responses()
+
+If there are any unexcuted callbacks, it will block until all of them are executed.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
+
+## disconnect()
+
+Normally you should not call `disconnect` manually.
+If you want to call fork(), `disconnect` should be call before fork().
+
+It will be blocked until all unexecuted commands are executed, and then it will disconnect.
+
+## connect()
+
+Normally you should not call `connect` manually.
+If you want to call fork(), `connect` should be call after fork().
+
 # LICENSE
 
 Copyright (C) plainbanana.
