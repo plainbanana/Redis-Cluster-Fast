@@ -266,7 +266,7 @@ The command can also be expressed by concatenating the subcommands with undersco
 
 It does not support (Sharded) Pub/Sub family of commands and should not be run.
 
-Please issue C<disconnect> in advance if you are going to excute fork() after issuing a command.
+It is recommended to issue C<disconnect> in advance just to be safe when executing fork() after issuing the command.
 
 =head2 <command>(@args, sub {})
 
