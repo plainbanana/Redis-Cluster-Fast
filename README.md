@@ -168,12 +168,12 @@ do not execute fork() without issuing `disconnect` if all callbacks are not exec
 ## wait\_one\_response()
 
 If there are any unexcuted callbacks, it will block until at least one is executed.
-The return value can be either 0 for normal, 1 for no callbacks remained, or -1 for other errors.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 ## wait\_all\_responses()
 
 If there are any unexcuted callbacks, it will block until all of them are executed.
-The return value can be either 0 for normal, 1 for no callbacks remained, or -1 for other errors.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 ## disconnect()
 

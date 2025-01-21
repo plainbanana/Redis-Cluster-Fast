@@ -464,7 +464,7 @@ int Redis__Cluster__Fast_wait_one_response(pTHX_ Redis__Cluster__Fast self) {
     int event_loop_error;
     int64_t callback_remain_current = self->pipeline_callback_remain;
     if (callback_remain_current <= 0) {
-        return 1;
+        return 0;
     }
     while (self->pipeline_callback_remain == callback_remain_current) {
         DEBUG_EVENT_BASE();
@@ -473,13 +473,13 @@ int Redis__Cluster__Fast_wait_one_response(pTHX_ Redis__Cluster__Fast self) {
             return -1;
         }
     }
-    return 0;
+    return 1;
 }
 
 int Redis__Cluster__Fast_wait_all_responses(pTHX_ Redis__Cluster__Fast self) {
     int event_loop_error;
     if (self->pipeline_callback_remain <= 0) {
-        return 1;
+        return 0;
     }
     while (self->pipeline_callback_remain > 0) {
         DEBUG_EVENT_BASE();
@@ -488,7 +488,7 @@ int Redis__Cluster__Fast_wait_all_responses(pTHX_ Redis__Cluster__Fast self) {
             return -1;
         }
     }
-    return 0;
+    return 1;
 }
 
 void Redis__Cluster__Fast_run_cmd(pTHX_ Redis__Cluster__Fast self, int argc, const char **argv, size_t *argvlen,

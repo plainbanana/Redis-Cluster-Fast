@@ -61,12 +61,16 @@ sub new {
 
 sub wait_one_response {
     my $self = shift;
-    $self->__wait_one_response();
+    my $result = $self->__wait_one_response();
+    return undef if $result == -1;
+    return $result;
 }
 
 sub wait_all_responses {
     my $self = shift;
-    $self->__wait_all_responses();
+    my $result = $self->__wait_all_responses();
+    return undef if $result == -1;
+    return $result;
 }
 
 sub disconnect {
@@ -295,12 +299,12 @@ do not execute fork() without issuing C<disconnect> if all callbacks are not exe
 =head2 wait_one_response()
 
 If there are any unexcuted callbacks, it will block until at least one is executed.
-The return value can be either 0 for normal, 1 for no callbacks remained, or -1 for other errors.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 =head2 wait_all_responses()
 
 If there are any unexcuted callbacks, it will block until all of them are executed.
-The return value can be either 0 for normal, 1 for no callbacks remained, or -1 for other errors.
+The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 =head2 disconnect()
 
