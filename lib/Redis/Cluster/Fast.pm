@@ -218,7 +218,7 @@ hiredis-cluster uses L<random()|https://linux.die.net/man/3/random> to select a 
 C<$seed> is expected to be an unsigned integer value,
 and is used as an argument for L<srandom()|https://linux.die.net/man/3/srandom>.
 
-These are different implementations from Perl's rand and srand.
+These are different implementations from Perl rand and srand.
 In this client, Perl Drand01 is also used to determine the destination node for executing a command that are not cluster commands.
 
 =head2 new(%args)
