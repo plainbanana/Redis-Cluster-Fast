@@ -87,8 +87,8 @@ hiredis-cluster uses [random()](https://linux.die.net/man/3/random) to select a 
 `$seed` is expected to be an unsigned integer value,
 and is used as an argument for [srandom()](https://linux.die.net/man/3/srandom).
 
-These are different implementations from Perl rand and srand.
-In this client, Perl Drand01 is also used to determine the destination node for executing a command that are not cluster commands.
+These are different implementations of Perl's rand and srand.
+In this client, Perl's Drand01 is also used to determine the destination node for executing a command that is not a cluster command.
 
 ## new(%args)
 
