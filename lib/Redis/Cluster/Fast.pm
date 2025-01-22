@@ -51,11 +51,7 @@ sub new {
 
     $self->__set_route_use_slots($args{route_use_slots} ? 1 : 0);
 
-    my $error = $self->__connect();
-    croak $error if $error;
-
-    $error = $self->__wait_until_event_ready();
-    croak $error if $error;
+    $self->connect();
     return $self;
 }
 
