@@ -2,6 +2,8 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+0.093 2025-01-22T17:36:52Z
+
     - Add pipeline support.
     - Replace legacy redisClusterConnect2() API with redisClusterAsyncConnect2() API.
     - Some chores.
