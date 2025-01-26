@@ -55,6 +55,13 @@ sub new {
     return $self;
 }
 
+sub run_event_loop {
+    my $self = shift;
+    my $result = $self->__run_event_loop();
+    return undef if $result == -1;
+    return $result;
+}
+
 sub wait_one_response {
     my $self = shift;
     my $result = $self->__wait_one_response();
@@ -294,6 +301,64 @@ do not execute fork() without issuing C<disconnect> if all callbacks are not exe
         my ($result, $error) = @_;
         # some operations...
     });
+
+=head2 run_event_loop()
+
+This method allows you to issue commands without waiting for their responses.
+You can then perform a blocking wait for those responses later, if needed.
+
+Executes one iteration of the event loop to process any pending commands that have not yet been sent
+and any incoming responses from Redis.
+
+If there are events that can be triggered immediately, they will all be processed.
+In other words, if there are unsent commands, they will be pipelined and sent,
+and if there are already-received responses, their corresponding callbacks will be executed.
+
+If there are no events that can be triggered immediately: there are neither unsent commands nor any Redis responses available to read,
+but unprocessed callbacks remain, then this method will block for up to C<command_timeout> while waiting for a response from Redis.
+When a timeout occurs, an error will be propagated to the corresponding callback(s).
+
+The return value can be either 1 for success (e.g., commands sent or responses read),
+0 for no callbacks remained, or undef for other errors.
+
+=head3 Notes
+
+=over 4
+
+=item *
+
+Be aware that the timeout check will only be triggered when there are neither unsent commands nor Redis responses available to read.
+If a timeout occurs, all remaining commands on that node will time out as well.
+
+=item *
+
+Internally, this method calls C<event_base_loop(..., EVLOOP_ONCE)>, which
+performs a single iteration of the event loop. A command will not be fully processed in a single call.
+
+=item *
+
+If you need to process multiple commands or wait for all responses, call
+this method repeatedly or use C<wait_all_responses>.
+
+=item *
+
+For a simpler, synchronous-like usage where you need at least one response,
+refer to C<wait_one_response>. If you only need to block until all
+pending commands are processed, see C<wait_all_responses>.
+
+=back
+
+=head3 Example
+
+  # Queue multiple commands in pipeline mode
+  $redis->set('key1', 'value1', sub {});
+  $redis->get('key2', sub {});
+
+  # Send commands to Redis without waiting for responses
+  $redis->run_event_loop();
+
+  # Possibly wait for responses
+  $redis->run_event_loop();
 
 =head2 wait_one_response()
 
