@@ -151,7 +151,7 @@ To run a Redis command in pipeline with arguments and a callback.
 The command can also be expressed by concatenating the subcommands with underscores.
 
 Commands issued to the same node are sent and received in pipeline mode.
-In pipeline mode, commands are not sent to Redis until `wait_one_response` or `wait_all_responses` is issued.
+In pipeline mode, commands are not sent to Redis until `run_event_loop`, `wait_one_response` or `wait_all_responses` is issued.
 
 The callback is executed with two arguments.
 The first is the result of the command, and the second is the error message.
