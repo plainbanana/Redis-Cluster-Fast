@@ -92,4 +92,23 @@ no_leaks_ok {
     $redis->wait_one_response;
 } "No Memory leak - pipeline wait_one_response";
 
+no_leaks_ok {
+    my $redis = Redis::Cluster::Fast->new(
+        startup_nodes => get_startup_nodes,
+    );
+    $redis->del('pipeline');
+
+    $redis->set('pipeline', 12345, sub {
+        my ($result, $error) = @_;
+    });
+    $redis->get('pipeline', sub {
+        my ($result, $error) = @_;
+    });
+    $redis->get('pipeline', sub {
+        my ($result, $error) = @_;
+    });
+    $redis->run_event_loop; # send only
+    undef $redis;
+} "No Memory leak - pipeline run_event_loop";
+
 done_testing;
