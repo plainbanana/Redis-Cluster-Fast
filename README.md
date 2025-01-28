@@ -158,7 +158,7 @@ The first is the result of the command, and the second is the error message.
 `$result` will be a scalar value or an array reference, and `$error` will be an undefined value if no errors occur.
 Also, `$error` may contain an error returned from Redis or an error that occurred on the client (e.g. Timeout).
 
-You cannot call any client methods inside the callback.
+You cannot call any client methods or exceptions inside the callback.
 
 After issuing a command in pipeline mode,
 do not execute fork() without issuing `disconnect` if all callbacks are not executed completely.
