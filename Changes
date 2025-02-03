@@ -2,6 +2,9 @@ Revision history for Perl extension Redis-Cluster-Fast
 
 {{$NEXT}}
 
+    - Add run_event_loop method.
+    - Update documents about benchmarks.
+
 0.093 2025-01-22T17:36:52Z
 
     - Add pipeline support.
