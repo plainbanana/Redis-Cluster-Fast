@@ -18,7 +18,6 @@ extern "C" {
 } /* extern "C" */
 #endif
 
-#define NEED_newRV_noinc
 #define NEED_my_strlcpy
 #include "ppport.h"
 
