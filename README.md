@@ -58,25 +58,22 @@ This client start to connect using RESP2 and currently it has no option to upgra
 
 Simple microbenchmark comparing PP and XS.
 The benchmark script used can be found under examples directory.
+Each operation was executed 100,000 times, and the execution time was measured in milliseconds.
 
-    Redis::Cluster::Fast is 0.084
-    Redis::ClusterRider is 0.26
-    ### mset ###
-                            Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider  13245/s                   --                 -34%
-    Redis::Cluster::Fast 20080/s                  52%                   --
-    ### mget ###
-                            Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider  14641/s                   --                 -40%
-    Redis::Cluster::Fast 24510/s                  67%                   --
-    ### incr ###
-                            Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider  18367/s                   --                 -44%
-    Redis::Cluster::Fast 32879/s                  79%                   --
-    ### new and ping ###
-                           Rate  Redis::ClusterRider Redis::Cluster::Fast
-    Redis::ClusterRider   146/s                   --                 -96%
-    Redis::Cluster::Fast 3941/s                2598%                   --
+    +--------------------------------+-------+-------+-------+-------+-------+
+    | Operation                      | P50   | P80   | P95   | P99   | P100  |
+    +--------------------------------+-------+-------+-------+-------+-------+
+    | get_pp                         | 0.028 | 0.032 | 0.036 | 0.050 | 0.880 |
+    | get_xs                         | 0.020 | 0.023 | 0.025 | 0.044 | 0.881 |
+    | get_xs_pipeline                | 0.014 | 0.015 | 0.018 | 0.021 | 0.472 |
+    | get_xs_pipeline_batched_100    | 0.003 | 0.003 | 0.004 | 0.074 | 0.323 |
+    | set_pp                         | 0.028 | 0.032 | 0.037 | 0.051 | 2.014 |
+    | set_xs                         | 0.021 | 0.024 | 0.027 | 0.047 | 0.729 |
+    | set_xs_pipeline                | 0.014 | 0.016 | 0.018 | 0.021 | 0.393 |
+    | set_xs_pipeline_batched_100    | 0.003 | 0.004 | 0.005 | 0.073 | 0.379 |
+    +--------------------------------+-------+-------+-------+-------+-------+
+
+c.f. https://github.com/plainbanana/Redis-Cluster-Fast-Benchmarks
 
 # METHODS
 
