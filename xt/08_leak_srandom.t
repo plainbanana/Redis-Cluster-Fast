@@ -115,4 +115,18 @@ no_leaks_ok {
     undef $redis;
 } "No Memory leak - pipeline run_event_loop";
 
+no_leaks_ok {
+    my $redis = Redis::Cluster::Fast->new(
+        startup_nodes => get_startup_nodes,
+    );
+
+    # broken command
+    eval {
+        $redis->get(1, 2);
+    };
+    eval {
+        $redis->get(1, 2, sub {});
+    };
+} "No Memory leak - a error when issuing command";
+
 done_testing;
