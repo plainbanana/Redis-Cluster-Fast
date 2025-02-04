@@ -440,24 +440,29 @@ void run_cmd_impl_pipeline(pTHX_ Redis__Cluster__Fast self, int argc, const char
             node = get_node_by_random(aTHX_ self);
             if (node == NULL) {
                 reply_t->error = newSVpvf("%s", "No node found");
-                return;
+                goto error;
             }
 
             status = redisClusterAsyncCommandArgvToNode(self->acc, node, replyCallbackPipeline, reply_pipeline_t, argc, argv, argvlen);
             if (status != REDIS_OK) {
                 DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
                 reply_t->error = newSVpvf("%s", self->acc->errstr);
-                return;
+                goto error;
             }
         } else {
             DEBUG_MSG("error: err=%d errstr=%s", self->acc->err, self->acc->errstr);
             reply_t->error = newSVpvf("%s", self->acc->errstr);
-            return;
+            goto error;
         }
     }
 
     self->pipeline_callback_remain++;
     DEBUG_MSG("pipeline callback remain: %ld", self->pipeline_callback_remain);
+    return;
+
+error:
+    SvREFCNT_dec(reply_pipeline_t->cb);
+    Safefree(reply_pipeline_t);
 }
 
 int Redis__Cluster__Fast_run_event_loop(pTHX_ Redis__Cluster__Fast self) {
