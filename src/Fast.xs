@@ -11,7 +11,7 @@ extern "C" {
 #include <unistd.h>
 #include <string.h>
 #include <time.h>
-#include "hiredis_cluster/adapters/libevent.h"
+#include "adapters/libevent.h"
 #include "hiredis_cluster/hircluster.h"
 
 #ifdef __cplusplus
@@ -26,6 +26,7 @@ extern "C" {
 #define NANO_SECOND_TO_MICRO 1000
 
 #define MIN_ATTEMPT_TO_GET_RESULT 2
+#define EVENT_BASE_PRIORITY_NUMBER 2
 
 #define DEBUG_MSG(fmt, ...) \
     if (self->debug) {                                                  \
@@ -272,6 +273,7 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     }
 
     self->cluster_event_base = event_base_new();
+    event_base_priority_init(self->cluster_event_base, EVENT_BASE_PRIORITY_NUMBER);
     if (redisClusterLibeventAttach(self->acc, self->cluster_event_base) != REDIS_OK) {
         return newSVpvf("%s", "failed to attach event base");
     }
