@@ -473,7 +473,7 @@ int Redis__Cluster__Fast_run_event_loop(pTHX_ Redis__Cluster__Fast self) {
         return 0;
     }
     DEBUG_EVENT_BASE();
-    event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_ONCE | EVLOOP_NONBLOCK);
+    event_loop_error = event_base_loop(self->cluster_event_base, EVLOOP_NONBLOCK);
     if (event_loop_error != 0) {
         return -1;
     }
