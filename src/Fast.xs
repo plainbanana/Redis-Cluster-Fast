@@ -273,7 +273,11 @@ SV *Redis__Cluster__Fast_connect(pTHX_ Redis__Cluster__Fast self) {
     }
 
     self->cluster_event_base = event_base_new();
-    event_base_priority_init(self->cluster_event_base, EVENT_BASE_PRIORITY_NUMBER);
+
+    if (event_base_priority_init(self->cluster_event_base, EVENT_BASE_PRIORITY_NUMBER) != 0) {
+      return newSVpvf("%s", "failed to initialize event base priorities");
+    }
+
     if (redisClusterLibeventAttach(self->acc, self->cluster_event_base) != REDIS_OK) {
         return newSVpvf("%s", "failed to attach event base");
     }
