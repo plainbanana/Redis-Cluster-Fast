@@ -303,18 +303,12 @@ do not execute fork() without issuing C<disconnect> if all callbacks are not exe
 
 This method is nonblocking and allows you to issue commands without waiting for their responses.
 
-Executes one iteration of the event loop to process any pending commands that have not yet been sent
-and any incoming responses from Redis.
-
-If there are events that can be triggered immediately, they will all be processed.
-In other words, if there are unsent commands, they will be pipelined and sent,
+If there are unsent commands, they will be pipelined and sent,
 and if there are already-received responses, their corresponding callbacks will be executed.
 When a timeout occurs, an error will be propagated to the corresponding callback(s).
 
-If there are no events that can be triggered immediately: there are neither unsent commands nor any Redis responses available to read,
-but unprocessed callbacks remain, then this method will return immediately with success.
-
-The return value can be either 1 for success (e.g., commands sent, responses read, or no immediately events),
+The return value can be either 1 for success
+(e.g., commands sent, responses read, or exit without waiting for any responses),
 0 for no callbacks remained, or undef for other errors.
 
 =head3 Notes
@@ -324,16 +318,6 @@ The return value can be either 1 for success (e.g., commands sent, responses rea
 =item *
 
 If a timeout occurs, all remaining commands on that node will time out as well.
-
-=item *
-
-Internally, this method calls C<event_base_loop(..., EVLOOP_ONCE | EVLOOP_NONBLOCK)>, which
-performs a single iteration of the event loop. A command will not be fully processed in a single call.
-
-=item *
-
-If you need to process multiple commands or wait for all responses, call
-this method repeatedly or use C<wait_all_responses>.
 
 =item *
 
