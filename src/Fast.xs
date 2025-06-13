@@ -26,6 +26,10 @@ extern "C" {
 #define NANO_SECOND_TO_MICRO 1000
 
 #define MIN_ATTEMPT_TO_GET_RESULT 2
+
+// Event priorities:
+// Priority 0: I/O events (highest priority) - Process Redis responses immediately
+// Priority 1: Timer events (lower priority) - Handle timeouts after I/O processing
 #define EVENT_BASE_PRIORITY_NUMBER 2
 
 #define DEBUG_MSG(fmt, ...) \
