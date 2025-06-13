@@ -341,12 +341,12 @@ pending commands are processed, see C<wait_all_responses>.
 
 =head2 wait_one_response()
 
-If there are any unexcuted callbacks, it will block until at least one is executed.
+If there are any unexecuted callbacks, it will block until at least one is executed.
 The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 =head2 wait_all_responses()
 
-If there are any unexcuted callbacks, it will block until all of them are executed.
+If there are any unexecuted callbacks, it will block until all of them are executed.
 The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 =head2 disconnect()

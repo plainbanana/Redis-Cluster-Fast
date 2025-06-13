@@ -198,12 +198,12 @@ pending commands are processed, see `wait_all_responses`.
 
 ## wait\_one\_response()
 
-If there are any unexcuted callbacks, it will block until at least one is executed.
+If there are any unexecuted callbacks, it will block until at least one is executed.
 The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 ## wait\_all\_responses()
 
-If there are any unexcuted callbacks, it will block until all of them are executed.
+If there are any unexecuted callbacks, it will block until all of them are executed.
 The return value can be either 1 for success, 0 for no callbacks remained, or undef for other errors.
 
 ## disconnect()
