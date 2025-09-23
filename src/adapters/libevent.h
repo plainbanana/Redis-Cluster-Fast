@@ -51,8 +51,8 @@ static void redisLibeventDestroy(redisLibeventEvents *e) {
 }
 
 static void redisLibeventHandler(evutil_socket_t fd, short event, void *arg) {
-    ((void)fd);
     redisLibeventEvents *e = (redisLibeventEvents*)arg;
+    ((void)fd);
     e->state |= REDIS_LIBEVENT_ENTERED;
 
     #define CHECK_DELETED() if (e->state & REDIS_LIBEVENT_DELETED) {\
@@ -75,9 +75,9 @@ static void redisLibeventHandler(evutil_socket_t fd, short event, void *arg) {
 }
 
 static void redisLibeventTimerHandler(evutil_socket_t fd, short event, void *arg) {
+    redisLibeventEvents *e = (redisLibeventEvents*)arg;
     ((void)fd);
     ((void)event);
-    redisLibeventEvents *e = (redisLibeventEvents*)arg;
     e->state |= REDIS_LIBEVENT_ENTERED;
 
     #define CHECK_DELETED() if (e->state & REDIS_LIBEVENT_DELETED) {\
