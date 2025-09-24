@@ -27,9 +27,11 @@ extern "C" {
 
 #define MIN_ATTEMPT_TO_GET_RESULT 2
 
-/* Event priorities:
-   Priority 0: I/O events (highest priority) - Process Redis responses immediately
-   Priority 1: Timer events (lower priority) - Handle timeouts after I/O processing */
+/* libevent adapter priority configuration
+   Uses 2 priority levels to ensure I/O events are processed before timeouts:
+   - Priority 0: I/O events (Redis responses) - highest priority
+   - Priority 1: Timer events (timeouts) - lower priority
+   EVENT_BASE_PRIORITY_NUMBER sets the total priorities for event_base_priority_init() */
 #define EVENT_BASE_PRIORITY_NUMBER 2
 
 #define DEBUG_MSG(fmt, ...) \
