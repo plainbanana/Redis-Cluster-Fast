@@ -42,3 +42,6 @@ cpanfile.snapshot
 
 deps/build
 test
+
+.clang-format
+CLAUDE.md

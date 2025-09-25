@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Carp 'croak';
 
-our $VERSION = "0.095";
+our $VERSION = "0.096";
 
 use constant {
     DEFAULT_COMMAND_TIMEOUT => 1.0,

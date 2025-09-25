@@ -72,7 +72,7 @@
          "web" : "https://github.com/plainbanana/Redis-Cluster-Fast"
       }
    },
-   "version" : "0.095",
+   "version" : "0.096",
    "x_contributors" : [
       "Masahiro Honma <hiratara@cpan.org>"
    ],
